@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>Auditoria Gôndola — Mateus Mais</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 :root{
@@ -148,6 +149,11 @@ select{width:100%;padding:11px;background:var(--s);border:1px solid var(--bd);
   padding:2px 6px;background:var(--s2);border-radius:6px;cursor:pointer;transition:all .15s;border:1px solid transparent}
 .ov-leg-item:hover,.ov-leg-item.hl{border-color:currentColor;color:var(--t)}
 .ov-leg-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+/* SHARE BUTTON */
+.btn-share{background:linear-gradient(135deg,#4f7cff,#6b5b95);color:#fff;margin-top:10px;gap:8px}
+.btn-share:hover{background:linear-gradient(135deg,#6b91ff,#7d6da8)}
+.btn-share:disabled{opacity:.5;cursor:wait}
 </style>
 </head>
 <body>
@@ -397,6 +403,13 @@ function buildOverlay(imgSrc, boxes, container){
     leg.appendChild(item);
   });
   container.appendChild(leg);
+
+  // Share / Download button
+  const shareBtn=document.createElement('button');
+  shareBtn.className='btn btn-share';
+  shareBtn.innerHTML='📤 Enviar / Salvar foto com marcações';
+  shareBtn.onclick=()=>shareOverlay(wrap,shareBtn);
+  container.appendChild(shareBtn);
 }
 
 // ── TOOLTIP ──
@@ -438,6 +451,44 @@ function moveTooltip(e){
   tt.style.left=left+'px';tt.style.top=top+'px';
 }
 function hideTooltip(){document.getElementById('tooltip').classList.remove('on')}
+
+// ══════════════════════════════════════
+//  SHARE / DOWNLOAD OVERLAY
+// ══════════════════════════════════════
+async function shareOverlay(wrapEl,btn){
+  btn.disabled=true;btn.innerHTML='⏳ Gerando imagem…';
+  try{
+    // Hide tooltip before capture
+    hideTooltip();
+    // Capture the overlay div as canvas
+    const canvas=await html2canvas(wrapEl,{useCORS:true,allowTaint:true,backgroundColor:'#000',scale:2});
+    canvas.toBlob(async blob=>{
+      if(!blob){btn.disabled=false;btn.innerHTML='📤 Enviar / Salvar foto com marcações';return}
+      const file=new File([blob],'auditoria-gondola.png',{type:'image/png'});
+
+      // Try Web Share API (mobile: WhatsApp, Telegram, etc.)
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        try{
+          await navigator.share({title:'Auditoria Gôndola',text:'Resultado da auditoria de gôndola — Mateus Mais',files:[file]});
+          btn.disabled=false;btn.innerHTML='✅ Enviado!';
+          setTimeout(()=>{btn.innerHTML='📤 Enviar / Salvar foto com marcações'},2500);
+          return;
+        }catch(e){if(e.name==='AbortError'){btn.disabled=false;btn.innerHTML='📤 Enviar / Salvar foto com marcações';return}}
+      }
+
+      // Fallback: download
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');a.href=url;a.download='auditoria-gondola.png';
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      btn.disabled=false;btn.innerHTML='✅ Salvo!';
+      setTimeout(()=>{btn.innerHTML='📤 Enviar / Salvar foto com marcações'},2500);
+    },'image/png');
+  }catch(e){
+    console.error('Share error:',e);
+    btn.disabled=false;btn.innerHTML='📤 Enviar / Salvar foto com marcações';
+  }
+}
 
 // ══════════════════════════════════════
 //  IDENTIFY
