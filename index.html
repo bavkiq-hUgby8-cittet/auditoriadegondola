@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Auditoria Gôndola — Mateus Mais</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#0f1117;--s:#1a1d27;--s2:#22263a;--bd:#2e3250;
+  --acc:#4f7cff;--ok:#22c55e;--warn:#f59e0b;--err:#ef4444;
+  --t:#e8eaf0;--t2:#8b91b0;--t3:#4a5070;--r:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-height:100vh}
+header{padding:14px 20px;background:var(--s);border-bottom:1px solid var(--bd);
+  display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.logo{display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--acc);box-shadow:0 0 8px var(--acc)}
+.vtag{font-size:10px;font-family:'DM Mono',monospace;color:var(--ok);
+  background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);padding:2px 8px;border-radius:10px}
+main{padding:20px;max-width:720px;margin:0 auto}
+/* API KEY */
+.api-bar{background:var(--s);border:1px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:16px;display:flex;gap:8px;align-items:center}
+.api-bar input{flex:1;background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:8px 12px;
+  color:var(--t);font-family:'DM Mono',monospace;font-size:11px;outline:none}
+.api-bar input:focus{border-color:var(--acc)}
+.api-bar .api-dot{width:8px;height:8px;border-radius:50%;background:var(--err);flex-shrink:0}
+.api-bar .api-dot.ok{background:var(--ok)}
+.api-bar label{font-size:11px;color:var(--t2);white-space:nowrap}
+/* TABS */
+.mode-tabs{display:flex;gap:2px;background:var(--s2);border-radius:var(--r);padding:3px;margin-bottom:20px}
+.mtab{flex:1;padding:8px 4px;text-align:center;font-size:11px;font-weight:500;border-radius:10px;
+  cursor:pointer;color:var(--t2);transition:all .15s}
+.mtab.on{background:var(--s);color:var(--t);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+/* VIEWS */
+.view{display:none}
+.view.on{display:block}
+/* SCORE */
+.score-row{display:flex;gap:10px;margin-bottom:16px}
+.sc{flex:1;background:var(--s);border:1px solid var(--bd);border-radius:var(--r);padding:14px;text-align:center}
+.sc-n{font-size:26px;font-weight:600;font-family:'DM Mono',monospace}
+.sc-l{font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+.shelf-block{margin-bottom:12px}
+.shelf-label{font-size:11px;font-family:'DM Mono',monospace;color:var(--t3);
+  text-transform:uppercase;letter-spacing:.1em;padding:6px 0;border-bottom:1px solid var(--bd);margin-bottom:6px}
+.item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;
+  border-bottom:1px solid rgba(46,50,80,.5);font-size:13px}
+.item:last-child{border-bottom:none}
+.item-left{flex:1}
+.item-brand{font-size:10px;font-weight:600;color:var(--acc);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+.item-name{font-weight:500;color:var(--t);line-height:1.4}
+.item-meta{font-size:11px;color:var(--t2);margin-top:3px;display:flex;gap:8px;flex-wrap:wrap}
+.meta-pill{background:var(--s2);border-radius:6px;padding:1px 6px;font-size:10px}
+.conf-bar{height:2px;background:var(--bd);border-radius:1px;margin-top:5px;width:80px}
+.conf-fill{height:100%;border-radius:1px}
+.badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:8px;flex-shrink:0;margin-top:1px}
+.b-ok{background:rgba(34,197,94,.12);color:var(--ok)}
+.b-warn{background:rgba(245,158,11,.12);color:var(--warn)}
+.b-err{background:rgba(239,68,68,.12);color:var(--err)}
+.b-acc{background:rgba(79,124,255,.12);color:var(--acc)}
+.obs-box{background:var(--s2);border-left:3px solid var(--acc);border-radius:0 8px 8px 0;
+  padding:12px;font-size:12px;color:var(--t2);line-height:1.7;margin:12px 0}
+.total-bar{background:var(--s);border:1px solid var(--bd);border-radius:var(--r);
+  padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:12px}
+.total-score{font-size:32px;font-weight:600;font-family:'DM Mono',monospace;color:var(--ok)}
+.total-info{flex:1}
+.total-title{font-size:14px;font-weight:500}
+.total-sub{font-size:11px;color:var(--t2);margin-top:2px}
+.prog{height:6px;background:var(--bd);border-radius:3px;margin-top:8px;overflow:hidden}
+.prog-fill{height:100%;background:var(--ok);border-radius:3px}
+/* UPLOAD / CAPTURE */
+.czone{background:var(--s);border:1.5px dashed var(--bd);border-radius:var(--r);
+  padding:24px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:14px}
+.czone:hover{border-color:var(--acc)}
+.czone.has{border-style:solid;border-color:var(--acc);padding:0;overflow:hidden}
+.czone img{width:100%;border-radius:var(--r);display:none;max-height:300px;object-fit:cover}
+.btn{width:100%;padding:13px;border-radius:var(--r);font-family:'DM Sans',sans-serif;
+  font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s;
+  display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px}
+.btn-p{background:var(--acc);color:#fff}
+.btn-p:hover{background:#6b91ff}
+.btn-p:disabled{background:var(--s2);color:var(--t3);cursor:not-allowed}
+.btn-g{background:var(--s);color:var(--t2);border:1px solid var(--bd)}
+.btn-g:hover{border-color:var(--t2);color:var(--t)}
+.pulse{display:none;text-align:center;background:var(--s);border:1px solid var(--bd);
+  border-radius:var(--r);padding:24px;margin-bottom:14px}
+.pulse.on{display:block}
+.ring{width:44px;height:44px;border-radius:50%;border:2px solid var(--acc);
+  background:rgba(79,124,255,.1);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;
+  animation:spin 1.4s ease-in-out infinite}
+@keyframes spin{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+.ring-c{width:18px;height:18px;background:var(--acc);border-radius:50%;opacity:.8}
+.err-box{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;
+  padding:10px 12px;font-size:12px;color:#fca5a5;margin-bottom:10px;display:none}
+.err-box.on{display:block}
+select{width:100%;padding:11px;background:var(--s);border:1px solid var(--bd);
+  border-radius:var(--r);color:var(--t);font-family:'DM Sans',sans-serif;font-size:13px;margin-bottom:14px;cursor:pointer}
+/* PRODUCT CARDS */
+.prod-card{background:var(--s);border:1px solid var(--bd);border-radius:var(--r);
+  overflow:hidden;margin-bottom:12px;transition:border-color .2s}
+.prod-card:hover{border-color:var(--acc)}
+.prod-card-inner{display:flex;gap:12px;padding:12px}
+.prod-img{width:90px;height:90px;border-radius:8px;object-fit:contain;background:var(--s2);flex-shrink:0}
+.prod-info{flex:1;min-width:0}
+.prod-brand{font-size:10px;font-weight:600;color:var(--acc);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.prod-name{font-size:13px;font-weight:500;line-height:1.4;margin-bottom:6px;
+  overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.prod-details{display:flex;flex-wrap:wrap;gap:6px}
+.prod-price{font-size:14px;font-weight:700;color:var(--ok);font-family:'DM Mono',monospace}
+.prod-price-old{font-size:11px;color:var(--t3);text-decoration:line-through;font-family:'DM Mono',monospace}
+.prod-cat{font-size:10px;color:var(--t2);background:var(--s2);padding:2px 8px;border-radius:6px}
+.prod-barcode{font-size:10px;color:var(--t3);font-family:'DM Mono',monospace}
+.prod-conf{font-size:10px;font-weight:600;padding:3px 8px;border-radius:8px;margin-left:auto;align-self:flex-start}
+/* CATALOG STATUS */
+.cat-status{font-size:11px;color:var(--t3);text-align:center;padding:8px;margin-bottom:12px;
+  background:var(--s);border-radius:8px;border:1px solid var(--bd)}
+.cat-status.loaded{color:var(--ok);border-color:rgba(34,197,94,.2)}
+/* IDENTIFIED SECTION */
+.id-section-title{font-size:12px;font-weight:600;color:var(--t2);text-transform:uppercase;
+  letter-spacing:.08em;padding:10px 0 6px;border-bottom:1px solid var(--bd);margin-bottom:10px}
+.id-summary{background:var(--s);border:1px solid var(--bd);border-radius:var(--r);
+  padding:14px;margin-bottom:16px;text-align:center}
+.id-count{font-size:28px;font-weight:700;font-family:'DM Mono',monospace;color:var(--acc)}
+.id-label{font-size:11px;color:var(--t2);margin-top:2px}
+.no-match{background:var(--s2);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--warn);margin-bottom:8px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><div class="dot"></div>Auditoria Gôndola</div>
+  <div class="vtag">Mateus Mais</div>
+</header>
+<main>
+<!-- API KEY -->
+<div class="api-bar">
+  <div class="api-dot" id="apiDot"></div>
+  <label>API Key:</label>
+  <input type="password" id="apiKey" placeholder="sk-ant-api03-..." oninput="saveKey(this.value)">
+</div>
+
+<div class="mode-tabs">
+  <div class="mtab on" onclick="setMode(0)">📸 Identificar</div>
+  <div class="mtab" onclick="setMode(1)">📋 Auditar Gôndola</div>
+</div>
+
+<!-- ══ VIEW 0: IDENTIFICAR PRODUTO ══ -->
+<div class="view on" id="v0">
+  <div class="cat-status" id="catStatus">⏳ Carregando catálogo…</div>
+  <div class="czone" id="idZone" onclick="document.getElementById('idFile').click()">
+    <img id="idPrev" alt="">
+    <div id="idPh" style="padding:20px">
+      <div style="font-size:28px;margin-bottom:8px">📷</div>
+      <div style="font-size:13px;font-weight:500;margin-bottom:4px">Foto do produto ou prateleira</div>
+      <div style="font-size:11px;color:var(--t2)">Toque para abrir câmera · Identifica todos os produtos da foto</div>
+    </div>
+  </div>
+  <input type="file" id="idFile" accept="image/*" capture="environment" onchange="loadImg(this,'id')" style="display:none">
+  <div class="err-box" id="idErr"></div>
+  <div class="pulse" id="idPulse">
+    <div class="ring"><div class="ring-c"></div></div>
+    <div style="font-size:13px;font-weight:500;margin-bottom:4px" id="idPl">Analisando…</div>
+    <div style="font-size:11px;color:var(--t2)" id="idPs">Identificando produtos na imagem</div>
+  </div>
+  <button class="btn btn-p" id="idBtn" disabled onclick="identify()">🔍 Identificar Produtos</button>
+  <button class="btn btn-g" onclick="document.getElementById('idFile').click()">Trocar imagem</button>
+  <div id="idResults"></div>
+</div>
+
+<!-- ══ VIEW 1: AUDITAR GÔNDOLA ══ -->
+<div class="view" id="v1">
+  <select id="sel">
+    <option value="">— Selecione a seção —</option>
+    <option value="cafe">☕ Café completo</option>
+    <option value="cappuccino">🧋 Cappuccinos</option>
+    <option value="soluvel">🫙 Solúveis</option>
+  </select>
+  <div class="czone" id="auditZone" onclick="document.getElementById('auditFile').click()">
+    <img id="auditPrev" alt="">
+    <div id="auditPh" style="padding:20px">
+      <div style="font-size:28px;margin-bottom:8px">📸</div>
+      <div style="font-size:13px;font-weight:500;margin-bottom:4px">Foto da gôndola</div>
+      <div style="font-size:11px;color:var(--t2)">Toque para abrir câmera</div>
+    </div>
+  </div>
+  <input type="file" id="auditFile" accept="image/*,video/*" capture="environment" onchange="loadImg(this,'audit')" style="display:none">
+  <div class="err-box" id="auditErr"></div>
+  <div class="pulse" id="auditPulse">
+    <div class="ring"><div class="ring-c"></div></div>
+    <div style="font-size:13px;font-weight:500;margin-bottom:4px" id="auditPl">Analisando…</div>
+    <div style="font-size:11px;color:var(--t2)" id="auditPs">Identificando produtos</div>
+  </div>
+  <button class="btn btn-p" id="auditBtn" disabled onclick="audit()">🔍 Auditar gôndola</button>
+  <button class="btn btn-g" onclick="document.getElementById('auditFile').click()">Trocar imagem</button>
+  <div id="auditResults"></div>
+</div>
+</main>
+
+<script>
+// ── STATE ──
+let catalog = [];
+let catalogLoaded = false;
+const imgs = { id: null, audit: null };
+
+// ── API KEY ──
+function saveKey(v) {
+  try { localStorage.setItem('ak', v); } catch(e) {}
+  document.getElementById('apiDot').classList.toggle('ok', v.startsWith('sk-'));
+}
+function getKey() {
+  const el = document.getElementById('apiKey');
+  let k = el.value;
+  if (!k) { try { k = localStorage.getItem('ak') || ''; } catch(e) {} el.value = k; }
+  document.getElementById('apiDot').classList.toggle('ok', k.startsWith('sk-'));
+  return k;
+}
+window.addEventListener('DOMContentLoaded', () => { getKey(); loadCatalog(); });
+
+// ── CATALOG ──
+function loadCatalog() {
+  const st = document.getElementById('catStatus');
+  // Try loading CSV from same directory
+  Papa.parse('catalogo_completo.csv', {
+    download: true,
+    header: true,
+    skipEmptyLines: true,
+    complete: function(results) {
+      catalog = results.data.filter(r => r.id && r.title);
+      catalogLoaded = true;
+      st.textContent = `✅ Catálogo carregado: ${catalog.length.toLocaleString()} produtos`;
+      st.classList.add('loaded');
+    },
+    error: function() {
+      st.textContent = '⚠️ Catálogo não encontrado. A identificação usará apenas IA.';
+      st.style.color = 'var(--warn)';
+    }
+  });
+}
+
+// ── TABS ──
+function setMode(n) {
+  document.querySelectorAll('.mtab').forEach((t, i) => t.classList.toggle('on', i === n));
+  document.querySelectorAll('.view').forEach((v, i) => v.classList.toggle('on', i === n));
+}
+
+// ── IMAGE LOADING ──
+function loadImg(inp, prefix) {
+  const f = inp.files[0]; if (!f) return;
+  const zone = document.getElementById(prefix + 'Zone');
+  const ph = document.getElementById(prefix + 'Ph');
+  const img = zone.querySelector('img');
+
+  if (f.type.startsWith('image/')) {
+    const r = new FileReader();
+    r.onload = e => {
+      img.src = e.target.result; img.style.display = 'block';
+      ph.style.display = 'none'; zone.classList.add('has');
+      imgs[prefix] = e.target.result.split(',')[1];
+      checkBtn(prefix);
+    };
+    r.readAsDataURL(f);
+  } else if (f.type.startsWith('video/')) {
+    const v = document.createElement('video'); v.preload = 'metadata';
+    v.onloadeddata = () => { v.currentTime = 1; };
+    v.onseeked = () => {
+      const c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight;
+      c.getContext('2d').drawImage(v, 0, 0);
+      const d = c.toDataURL('image/jpeg', .9);
+      img.src = d; img.style.display = 'block'; ph.style.display = 'none';
+      zone.classList.add('has'); imgs[prefix] = d.split(',')[1];
+      checkBtn(prefix); URL.revokeObjectURL(v.src);
+    };
+    v.src = URL.createObjectURL(f);
+  }
+}
+
+function checkBtn(prefix) {
+  if (prefix === 'id') {
+    document.getElementById('idBtn').disabled = !imgs.id;
+  } else {
+    const sec = document.getElementById('sel').value;
+    document.getElementById('auditBtn').disabled = !(imgs.audit && sec);
+  }
+}
+document.getElementById('sel').onchange = () => checkBtn('audit');
+
+// ── IDENTIFY PRODUCTS ──
+async function identify() {
+  const key = getKey();
+  if (!key) { showErr('id', 'Insira sua API key da Anthropic acima.'); return; }
+
+  hideErr('id');
+  const btn = document.getElementById('idBtn');
+  const btnG = document.querySelector('#v0 .btn-g');
+  btn.style.display = 'none'; btnG.style.display = 'none';
+  const pu = document.getElementById('idPulse'); pu.classList.add('on');
+
+  const msgs = ['Analisando imagem…','Lendo rótulos…','Identificando marcas…','Buscando no catálogo…'];
+  let mi = 0;
+  const tick = setInterval(() => {
+    document.getElementById('idPs').textContent = msgs[mi = (mi + 1) % msgs.length];
+  }, 1600);
+
+  // Build catalog hint (top brands)
+  let catalogHint = '';
+  if (catalogLoaded && catalog.length > 0) {
+    // Send a sample of product names to help Claude match
+    const sample = catalog.slice(0, 200).map(p => `${p.id}|${p.title}|${p.brand||''}`).join('\n');
+    catalogHint = `\n\nCatálogo parcial para referência de IDs (use o campo "id" quando conseguir identificar):\n${sample}\n\n(Existem ${catalog.length} produtos no catálogo total. Use os IDs no formato mostrado acima.)`;
+  }
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: imgs.id } },
+            { type: 'text', text: `Você é um sistema de identificação de produtos de supermercado. Analise a imagem e identifique TODOS os produtos visíveis.
+
+Para cada produto, forneça:
+- nome completo do produto (marca + tipo + peso/volume)
+- marca
+- categoria (ex: Café, Refrigerante, Biscoito, etc.)
+- confiança de 0 a 1
+- qualquer texto legível na embalagem (preço, código de barras, etc.)
+- código de barras se visível
+${catalogHint}
+
+Retorne APENAS JSON sem markdown:
+{"produtos":[{"nome":"","marca":"","categoria":"","conf":0.0,"texto_legivel":"","barcode":"","catalog_id":""}],"total":0,"obs":""}
+
+Se conseguir associar ao catálogo, preencha catalog_id. Caso contrário, deixe vazio.` }
+          ]
+        }]
+      })
+    });
+
+    clearInterval(tick);
+    if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || 'Erro na API'); }
+
+    const data = await res.json();
+    const txt = data.content.find(b => b.type === 'text')?.text || '';
+    const parsed = JSON.parse(txt.replace(/```json|```/g, '').trim());
+
+    pu.classList.remove('on');
+    renderIdentified(parsed);
+  } catch (e) {
+    clearInterval(tick); pu.classList.remove('on');
+    btn.style.display = ''; btnG.style.display = '';
+    showErr('id', e.message || 'Erro. Tente novamente.');
+  }
+}
+
+function renderIdentified(data) {
+  const results = document.getElementById('idResults');
+  const prods = data.produtos || [];
+
+  let html = `<div class="id-summary">
+    <div class="id-count">${prods.length}</div>
+    <div class="id-label">produto${prods.length !== 1 ? 's' : ''} identificado${prods.length !== 1 ? 's' : ''}</div>
+  </div>`;
+
+  if (data.obs) {
+    html += `<div class="obs-box">💡 ${data.obs}</div>`;
+  }
+
+  let matched = 0, unmatched = 0;
+
+  prods.forEach(p => {
+    // Try to match with catalog
+    let catMatch = null;
+    if (catalogLoaded) {
+      // First try by catalog_id
+      if (p.catalog_id) {
+        catMatch = catalog.find(c => c.id === p.catalog_id);
+      }
+      // Then try by barcode
+      if (!catMatch && p.barcode) {
+        catMatch = catalog.find(c => c.barcode === p.barcode);
+      }
+      // Then fuzzy match by name
+      if (!catMatch) {
+        catMatch = fuzzyMatch(p.nome, p.marca);
+      }
+    }
+
+    if (catMatch) {
+      matched++;
+      const price = catMatch.price ? catMatch.price.replace(' BRL', '') : '';
+      const salePrice = catMatch.sale_price ? catMatch.sale_price.replace(' BRL', '') : '';
+      const imgUrl = catMatch.image_link || '';
+      const conf = Math.round((p.conf || 0.8) * 100);
+
+      html += `<div class="prod-card">
+        <div class="prod-card-inner">
+          <img class="prod-img" src="${imgUrl}" alt="${catMatch.title}" onerror="this.style.display='none'">
+          <div class="prod-info">
+            <div class="prod-brand">${catMatch.brand || p.marca || ''}</div>
+            <div class="prod-name">${catMatch.title}</div>
+            <div class="prod-details">
+              ${salePrice ? `<span class="prod-price">R$${salePrice}</span><span class="prod-price-old">R$${price}</span>` : price ? `<span class="prod-price">R$${price}</span>` : ''}
+              <span class="prod-cat">${catMatch.categoria || p.categoria || ''}</span>
+              ${catMatch.barcode ? `<span class="prod-barcode">${catMatch.barcode}</span>` : ''}
+            </div>
+          </div>
+          <div class="prod-conf badge ${conf >= 90 ? 'b-ok' : conf >= 70 ? 'b-warn' : 'b-err'}">${conf}%</div>
+        </div>
+      </div>`;
+    } else {
+      unmatched++;
+      const conf = Math.round((p.conf || 0.5) * 100);
+      html += `<div class="prod-card" style="border-color:var(--warn)">
+        <div class="prod-card-inner">
+          <div style="width:90px;height:90px;background:var(--s2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">📦</div>
+          <div class="prod-info">
+            <div class="prod-brand">${p.marca || 'Não identificado'}</div>
+            <div class="prod-name">${p.nome}</div>
+            <div class="prod-details">
+              <span class="prod-cat">${p.categoria || ''}</span>
+              ${p.texto_legivel ? `<span class="meta-pill">${p.texto_legivel}</span>` : ''}
+              ${p.barcode ? `<span class="prod-barcode">${p.barcode}</span>` : ''}
+            </div>
+          </div>
+          <div class="prod-conf badge b-warn">${conf}%</div>
+        </div>
+      </div>`;
+    }
+  });
+
+  if (catalogLoaded) {
+    html += `<div class="obs-box">📊 <strong>Match:</strong> ${matched} encontrado${matched !== 1 ? 's' : ''} no catálogo · ${unmatched} sem correspondência</div>`;
+  }
+
+  html += `<button class="btn btn-g" style="margin-top:12px" onclick="resetIdentify()">Nova identificação</button>`;
+  results.innerHTML = html;
+  results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function fuzzyMatch(nome, marca) {
+  if (!nome) return null;
+  const terms = nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/\s+/).filter(t => t.length > 2);
+  let bestMatch = null, bestScore = 0;
+
+  for (const item of catalog) {
+    const title = (item.title || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    let score = 0;
+    for (const term of terms) {
+      if (title.includes(term)) score++;
+    }
+    // Bonus for brand match
+    if (marca && item.brand && item.brand.toLowerCase().includes(marca.toLowerCase().substring(0, 4))) {
+      score += 2;
+    }
+    if (score > bestScore && score >= Math.min(3, terms.length * 0.5)) {
+      bestScore = score;
+      bestMatch = item;
+    }
+  }
+  return bestMatch;
+}
+
+function resetIdentify() {
+  document.getElementById('idResults').innerHTML = '';
+  document.getElementById('idBtn').style.display = '';
+  document.querySelector('#v0 .btn-g').style.display = '';
+  document.getElementById('idBtn').disabled = !imgs.id;
+}
+
+// ── AUDIT GONDOLA ──
+const CAT_AUDIT = {
+  cafe: [
+    'MER12020|Café Torrado e Moído Extraforte Melitta 250g|MELITTA',
+    'MER38044|Café Torrado e Moído Tradicional Melitta 250g|MELITTA',
+    'MER39873|Café Torrado e Moído Especial Melitta 500g|MELITTA',
+    'MER07683|Café Lor Pouch Ultimo 250g|L\'OR',
+    'MER25422|Café Gourmet Cerrado Mineiro L\'Or 250g|L\'OR',
+    'MER25390|Café Intenso L\'Or Torras Gourmet 250g|L\'OR',
+    'MER25388|Café Gourmet Sul de Minas L\'Or 250g|L\'OR',
+    'MER25423|Café Lor Delicado 250g|L\'OR',
+    'MER07679|Café Solúvel Classique L\'Or Vidro 84g|L\'OR',
+    'MER07236|Café Solúvel Intense L\'Or Vidro 130g|L\'OR',
+    'MER07680|Café Solúvel Montanhas Capixabas L\'Or 84g|L\'OR',
+    'MER07743|Café Solúvel Sul da Bahia L\'Or 84g|L\'OR',
+    'MER15640|Café Imola Intenso L\'Or 250g|L\'OR',
+    'MER02512|Café Torrado Tradicional Pilão a Vácuo 250g|PILAO',
+    'MER07645|Café Torrado Extraforte Pilão 250g|PILAO',
+    'MER02760|Café Torrado Tradicional Pilão Pacote 250g|PILAO',
+    'MER02282|Café Solúvel Pilão Cafeteria Sachê 40g|PILAO',
+    'MER02639|Café Tradicional Maratá a Vácuo 250g|MARATA',
+    'MER02363|Café Extraforte Almofada Maratá 250g|MARATA',
+    'MER07711|Café Tradicional Maratá 100g|MARATA',
+    'MER09593|Café Solúvel Nescafé Original 100g|NESCAFE',
+    'MER09594|Café Solúvel Nescafé Tradição 100g|NESCAFE',
+    'MER02421|Café Solúvel Granulado Clássico Santa Clara Vidro|SANTA CLARA',
+    'MER07692|Café Puro a Vácuo 250g|PURO',
+    'MER07635|Café Puro Almofada 250g|PURO',
+  ],
+  cappuccino: [
+    'MER14707|Cappuccino Classic 3 Corações Pote 200g|3 CORACOES',
+    'MER14752|Cappuccino Classic 3 Corações Pote 400g|3 CORACOES',
+    'MER14751|Cappuccino Chocolate 3 Corações Pote 200g|3 CORACOES',
+    'MER38376|Cappuccino Baunilha 3 Corações Pote 200g|3 CORACOES',
+    'MER08926|Cappuccino Caramelo Salgado 3 Corações 200g|3 CORACOES',
+    'MER14730|Cappuccino Descafeinado 3 Corações 200g|3 CORACOES',
+    'MER07698|Cappuccino Tradicional Maratá 200g|MARATA',
+    'MER02432|Cappuccino Chocolate Maratá 200g|MARATA',
+    'MER38567|Cappuccino Solúvel Tradicional Melitta Lata|MELITTA',
+    'MER02061|Cappuccino Chocolate com Avelã Melitta Lata 200g|MELITTA',
+    'MER38570|Cappuccino Chocolate Melitta Lata|MELITTA',
+  ],
+  soluvel: [
+    'MER09593|Café Solúvel Nescafé Original 100g|NESCAFE',
+    'MER09594|Café Solúvel Nescafé Tradição 100g|NESCAFE',
+    'MER33397|Café Solúvel Nescafé Original 200g|NESCAFE',
+    'MER07679|Café Solúvel Classique L\'Or Vidro 84g|L\'OR',
+    'MER07236|Café Solúvel Intense L\'Or Vidro 130g|L\'OR',
+    'MER07680|Café Solúvel Montanhas Capixabas L\'Or 84g|L\'OR',
+    'MER02421|Café Solúvel Granulado Clássico Santa Clara Vidro|SANTA CLARA',
+    'MER05957|Café Solúvel Granulado Clássico Santa Clara|SANTA CLARA',
+    'MER23431|Café Solúvel Liofilizado Santa Clara 50g|SANTA CLARA',
+  ]
+};
+
+async function audit() {
+  const key = getKey();
+  if (!key) { showErr('audit', 'Insira sua API key da Anthropic acima.'); return; }
+  const sec = document.getElementById('sel').value;
+  if (!sec) { showErr('audit', 'Selecione uma seção primeiro.'); return; }
+
+  hideErr('audit');
+  document.getElementById('auditBtn').style.display = 'none';
+  document.querySelector('#v1 .btn-g').style.display = 'none';
+  const pu = document.getElementById('auditPulse'); pu.classList.add('on');
+
+  const msgs = ['Identificando marcas…','Contando facings…','Detectando rupturas…','Calculando conformidade…'];
+  let mi = 0;
+  const tick = setInterval(() => {
+    document.getElementById('auditPs').textContent = msgs[mi = (mi + 1) % msgs.length];
+  }, 1600);
+
+  const prods = (CAT_AUDIT[sec] || []).map(l => { const [id, name, brand] = l.split('|'); return `- [${id}] ${name} (${brand})`; }).join('\n');
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: imgs.audit } },
+            { type: 'text', text: `Você é um sistema de auditoria de gôndola de supermercado. Analise a imagem shelf por shelf.
+Produtos esperados (catálogo):
+${prods}
+Use logotipos, cores de embalagem, texto legível e etiquetas de preço para identificar com precisão.
+Retorne APENAS JSON sem markdown:
+{"encontrados":[{"id":"","nome":"","facings":0,"shelf":"","conf":0.0}],"baixo":[{"id":"","nome":"","facings":0,"obs":""}],"ausentes":["id1"],"extras":["descrição"],"score":0,"obs":""}` }
+          ]
+        }]
+      })
+    });
+
+    clearInterval(tick);
+    if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || 'Erro na API'); }
+
+    const data = await res.json();
+    const txt = data.content.find(b => b.type === 'text')?.text || '';
+    const parsed = JSON.parse(txt.replace(/```json|```/g, '').trim());
+
+    pu.classList.remove('on');
+    renderAudit(parsed, CAT_AUDIT[sec] || []);
+  } catch (e) {
+    clearInterval(tick); pu.classList.remove('on');
+    document.getElementById('auditBtn').style.display = '';
+    document.querySelector('#v1 .btn-g').style.display = '';
+    showErr('audit', e.message || 'Erro. Tente novamente.');
+  }
+}
+
+function renderAudit(d, catList) {
+  const results = document.getElementById('auditResults');
+  const ok = d.encontrados || [], low = d.baixo || [], miss = d.ausentes || [], score = d.score || 0;
+
+  let html = `<div class="total-bar">
+    <div class="total-score" style="color:${score >= 80 ? 'var(--ok)' : score >= 55 ? 'var(--warn)' : 'var(--err)'}">${score}%</div>
+    <div class="total-info">
+      <div class="total-title">Conformidade da gôndola</div>
+      <div class="total-sub">${ok.length} encontrados · ${low.length} baixo estoque · ${miss.length} ausentes</div>
+      <div class="prog"><div class="prog-fill" style="width:${score}%;background:${score >= 80 ? 'var(--ok)' : score >= 55 ? 'var(--warn)' : 'var(--err)'}"></div></div>
+    </div>
+  </div>
+  <div class="score-row">
+    <div class="sc"><div class="sc-n" style="color:var(--ok)">${ok.length}</div><div class="sc-l">Encontrados</div></div>
+    <div class="sc"><div class="sc-n" style="color:var(--warn)">${low.length}</div><div class="sc-l">Baixo</div></div>
+    <div class="sc"><div class="sc-n" style="color:var(--err)">${miss.length}</div><div class="sc-l">Ausentes</div></div>
+  </div>`;
+
+  if (ok.length) {
+    html += `<div class="shelf-block"><div class="shelf-label">Encontrados na gôndola</div>`;
+    ok.forEach(p => {
+      const c = Math.round((p.conf || .9) * 100);
+      // Try to get image from catalog
+      let imgHtml = '';
+      if (catalogLoaded) {
+        const catItem = catalog.find(ci => ci.id === p.id);
+        if (catItem && catItem.image_link) {
+          imgHtml = `<img class="prod-img" src="${catItem.image_link}" alt="" style="width:50px;height:50px;border-radius:6px;object-fit:contain;background:var(--s2)" onerror="this.style.display='none'">`;
+        }
+      }
+      html += `<div class="item">${imgHtml}<div class="item-left"><div class="item-brand">${p.nome}</div>
+        <div class="item-meta"><span class="meta-pill">${p.id}</span><span class="meta-pill">${p.facings || 1} facings</span>${p.shelf ? `<span class="meta-pill">${p.shelf}</span>` : ''}</div>
+        <div class="conf-bar"><div class="conf-fill" style="width:${c}%;background:${c >= 90 ? 'var(--ok)' : c >= 75 ? 'var(--warn)' : 'var(--err)'}"></div></div>
+      </div><div class="badge ${c >= 90 ? 'b-ok' : c >= 75 ? 'b-warn' : 'b-err'}">${c}%</div></div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (low.length) {
+    html += `<div class="shelf-block"><div class="shelf-label">⚠️ Baixo estoque</div>`;
+    low.forEach(p => {
+      html += `<div class="item"><div class="item-left"><div class="item-brand">${p.nome}</div>
+        <div class="item-meta"><span class="meta-pill">${p.id}</span><span class="meta-pill">${p.facings || 1} facing</span>${p.obs ? `<span class="meta-pill">${p.obs}</span>` : ''}</div>
+      </div><div class="badge b-warn">Repor</div></div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (miss.length) {
+    html += `<div class="shelf-block"><div class="shelf-label">🚨 Ruptura — não encontrado</div>`;
+    miss.forEach(id => {
+      const prod = catList.find(l => l.startsWith(id + '|'));
+      html += `<div class="item"><div class="item-left"><div class="item-name">${prod ? prod.split('|')[1] : id}</div></div>
+        <div class="badge b-err">Ruptura</div></div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (d.obs) html += `<div class="obs-box">💬 ${d.obs}</div>`;
+  html += `<button class="btn btn-g" style="margin-top:12px" onclick="resetAudit()">Nova auditoria</button>`;
+  results.innerHTML = html;
+  results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function resetAudit() {
+  document.getElementById('auditResults').innerHTML = '';
+  document.getElementById('auditBtn').style.display = '';
+  document.querySelector('#v1 .btn-g').style.display = '';
+  checkBtn('audit');
+}
+
+// ── UTILS ──
+function showErr(prefix, msg) {
+  const el = document.getElementById(prefix + 'Err');
+  el.textContent = '⚠️ ' + msg; el.classList.add('on');
+}
+function hideErr(prefix) {
+  document.getElementById(prefix + 'Err').classList.remove('on');
+}
+</script>
+</body>
+</html>
