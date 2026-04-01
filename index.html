@@ -32,8 +32,7 @@ main{padding:20px;max-width:720px;margin:0 auto}
 .mtab{flex:1;padding:8px 4px;text-align:center;font-size:11px;font-weight:500;border-radius:10px;
   cursor:pointer;color:var(--t2);transition:all .15s}
 .mtab.on{background:var(--s);color:var(--t);box-shadow:0 1px 4px rgba(0,0,0,.3)}
-.view{display:none}
-.view.on{display:block}
+.view{display:none}.view.on{display:block}
 .score-row{display:flex;gap:10px;margin-bottom:16px}
 .sc{flex:1;background:var(--s);border:1px solid var(--bd);border-radius:var(--r);padding:14px;text-align:center}
 .sc-n{font-size:26px;font-weight:600;font-family:'DM Mono',monospace}
@@ -113,6 +112,16 @@ select{width:100%;padding:11px;background:var(--s);border:1px solid var(--bd);
   padding:14px;margin-bottom:16px;text-align:center}
 .id-count{font-size:28px;font-weight:700;font-family:'DM Mono',monospace;color:var(--acc)}
 .id-label{font-size:11px;color:var(--t2);margin-top:2px}
+/* OVERLAY */
+.overlay-wrap{position:relative;margin-bottom:14px;border-radius:var(--r);overflow:hidden;background:var(--s)}
+.overlay-wrap img{width:100%;display:block}
+.overlay-wrap canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+.legend{display:flex;gap:12px;justify-content:center;padding:8px;font-size:10px;color:var(--t2);flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:4px}
+.legend-dot{width:10px;height:10px;border-radius:3px}
+.toggle-overlay{font-size:11px;color:var(--acc);background:none;border:1px solid var(--acc);
+  border-radius:8px;padding:4px 12px;cursor:pointer;margin:0 auto 12px;display:block;font-family:'DM Sans',sans-serif}
+.toggle-overlay:hover{background:rgba(79,124,255,.1)}
 </style>
 </head>
 <body>
@@ -188,8 +197,9 @@ select{width:100%;padding:11px;background:var(--s);border:1px solid var(--bd);
 let catalog = [];
 let catalogLoaded = false;
 const imgs = { id: null, audit: null };
+const imgSrcs = { id: null, audit: null };
 
-// ── API KEY (OpenAI) ──
+// ── API KEY ──
 function saveKey(v) {
   try { localStorage.setItem('oai_key', v); } catch(e) {}
   document.getElementById('apiDot').classList.toggle('ok', v.startsWith('sk-'));
@@ -203,59 +213,40 @@ function getKey() {
 }
 window.addEventListener('DOMContentLoaded', () => { getKey(); loadCatalog(); });
 
-// ── OPENAI VISION CALL ──
+// ── OPENAI VISION ──
 async function callVision(base64img, prompt) {
   const key = getKey();
   if (!key) throw new Error('Insira sua API key da OpenAI acima.');
-
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + key
-    },
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
     body: JSON.stringify({
       model: 'gpt-4.1',
       max_tokens: 4000,
-      messages: [{
-        role: 'user',
-        content: [
-          { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + base64img, detail: 'high' } },
-          { type: 'text', text: prompt }
-        ]
-      }]
+      messages: [{ role: 'user', content: [
+        { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + base64img, detail: 'high' } },
+        { type: 'text', text: prompt }
+      ]}]
     })
   });
-
-  if (!res.ok) {
-    const e = await res.json();
-    throw new Error(e.error?.message || 'Erro na API OpenAI (' + res.status + ')');
-  }
-
+  if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || 'Erro OpenAI (' + res.status + ')'); }
   const data = await res.json();
   const txt = data.choices?.[0]?.message?.content || '';
-  // Strip markdown code fences if present
-  const clean = txt.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
-  return JSON.parse(clean);
+  return JSON.parse(txt.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim());
 }
 
 // ── CATALOG ──
 function loadCatalog() {
   const st = document.getElementById('catStatus');
   Papa.parse('catalogo_completo.csv', {
-    download: true,
-    header: true,
-    skipEmptyLines: true,
-    complete: function(results) {
-      catalog = results.data.filter(r => r.id && r.title);
+    download: true, header: true, skipEmptyLines: true,
+    complete: function(r) {
+      catalog = r.data.filter(r => r.id && r.title);
       catalogLoaded = true;
-      st.textContent = '✅ Catálogo carregado: ' + catalog.length.toLocaleString() + ' produtos';
+      st.textContent = '✅ Catálogo: ' + catalog.length.toLocaleString() + ' produtos';
       st.classList.add('loaded');
     },
-    error: function() {
-      st.textContent = '⚠️ Catálogo não encontrado. A identificação usará apenas IA.';
-      st.style.color = 'var(--warn)';
-    }
+    error: function() { st.textContent = '⚠️ Catálogo não encontrado.'; st.style.color = 'var(--warn)'; }
   });
 }
 
@@ -271,13 +262,13 @@ function loadImg(inp, prefix) {
   const zone = document.getElementById(prefix + 'Zone');
   const ph = document.getElementById(prefix + 'Ph');
   const img = zone.querySelector('img');
-
   if (f.type.startsWith('image/')) {
     const r = new FileReader();
     r.onload = e => {
       img.src = e.target.result; img.style.display = 'block';
       ph.style.display = 'none'; zone.classList.add('has');
       imgs[prefix] = e.target.result.split(',')[1];
+      imgSrcs[prefix] = e.target.result;
       checkBtn(prefix);
     };
     r.readAsDataURL(f);
@@ -289,57 +280,161 @@ function loadImg(inp, prefix) {
       c.getContext('2d').drawImage(v, 0, 0);
       const d = c.toDataURL('image/jpeg', .9);
       img.src = d; img.style.display = 'block'; ph.style.display = 'none';
-      zone.classList.add('has'); imgs[prefix] = d.split(',')[1];
+      zone.classList.add('has'); imgs[prefix] = d.split(',')[1]; imgSrcs[prefix] = d;
       checkBtn(prefix); URL.revokeObjectURL(v.src);
     };
     v.src = URL.createObjectURL(f);
   }
 }
-
 function checkBtn(prefix) {
-  if (prefix === 'id') {
-    document.getElementById('idBtn').disabled = !imgs.id;
-  } else {
-    document.getElementById('auditBtn').disabled = !(imgs.audit && document.getElementById('sel').value);
-  }
+  if (prefix === 'id') document.getElementById('idBtn').disabled = !imgs.id;
+  else document.getElementById('auditBtn').disabled = !(imgs.audit && document.getElementById('sel').value);
 }
 document.getElementById('sel').onchange = () => checkBtn('audit');
 
+// ══════════════════════════════════════
+// ── OVERLAY: desenhar na imagem ──
+// ══════════════════════════════════════
+function drawOverlay(imgSrc, annotations, containerId) {
+  // annotations = [{ x, y, w, h, label, status:'ok'|'warn'|'err'|'extra', conf }]
+  const wrap = document.createElement('div');
+  wrap.className = 'overlay-wrap';
+  wrap.id = containerId + '-overlay';
+
+  const img = new Image();
+  img.onload = function() {
+    wrap.style.maxWidth = '100%';
+    const imgEl = document.createElement('img');
+    imgEl.src = imgSrc;
+    imgEl.alt = 'Foto analisada';
+    wrap.appendChild(imgEl);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    wrap.appendChild(canvas);
+
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+
+    const colors = {
+      ok:    { fill: 'rgba(34,197,94,0.18)',  stroke: '#22c55e', text: '#22c55e' },
+      warn:  { fill: 'rgba(245,158,11,0.18)', stroke: '#f59e0b', text: '#f59e0b' },
+      err:   { fill: 'rgba(239,68,68,0.22)',  stroke: '#ef4444', text: '#ef4444' },
+      extra: { fill: 'rgba(79,124,255,0.18)', stroke: '#4f7cff', text: '#4f7cff' }
+    };
+
+    annotations.forEach(a => {
+      const c = colors[a.status] || colors.ok;
+      const ax = (a.x / 100) * W;
+      const ay = (a.y / 100) * H;
+      const aw = (a.w / 100) * W;
+      const ah = (a.h / 100) * H;
+
+      // Draw box
+      ctx.fillStyle = c.fill;
+      ctx.fillRect(ax, ay, aw, ah);
+      ctx.strokeStyle = c.stroke;
+      ctx.lineWidth = Math.max(2, W * 0.003);
+      ctx.setLineDash([]);
+      ctx.strokeRect(ax, ay, aw, ah);
+
+      // Draw label background
+      const fontSize = Math.max(11, Math.min(16, W * 0.018));
+      ctx.font = '600 ' + fontSize + 'px "DM Sans", sans-serif';
+      const label = a.label || '';
+      const metrics = ctx.measureText(label);
+      const lw = metrics.width + 10;
+      const lh = fontSize + 8;
+      const lx = ax;
+      const ly = ay - lh - 2;
+
+      if (ly > 0 && label) {
+        ctx.fillStyle = c.stroke;
+        ctx.beginPath();
+        ctx.roundRect(lx, ly, lw, lh, 4);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.fillText(label, lx + 5, ly + fontSize + 1);
+      } else if (label) {
+        // Draw inside top of box
+        ctx.fillStyle = c.stroke;
+        ctx.beginPath();
+        ctx.roundRect(ax + 2, ay + 2, lw, lh, 4);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.fillText(label, ax + 7, ay + fontSize + 3);
+      }
+
+      // Draw confidence badge
+      if (a.conf) {
+        const confTxt = Math.round(a.conf * 100) + '%';
+        const cm = ctx.measureText(confTxt);
+        const cx = ax + aw - cm.width - 12;
+        const cy = ay + 2;
+        ctx.fillStyle = c.stroke;
+        ctx.beginPath();
+        ctx.roundRect(cx, cy, cm.width + 10, lh, 4);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.fillText(confTxt, cx + 5, cy + fontSize + 1);
+      }
+    });
+  };
+  img.src = imgSrc;
+
+  // Legend
+  const leg = document.createElement('div');
+  leg.className = 'legend';
+  leg.innerHTML =
+    '<div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div>OK</div>' +
+    '<div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>Baixo estoque</div>' +
+    '<div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Ruptura</div>' +
+    '<div class="legend-item"><div class="legend-dot" style="background:#4f7cff"></div>Extra</div>';
+  wrap.appendChild(leg);
+
+  return wrap;
+}
+
+// ══════════════════════════════════
 // ── IDENTIFY PRODUCTS ──
+// ══════════════════════════════════
 async function identify() {
   hideErr('id');
   const btn = document.getElementById('idBtn');
   const btnG = document.querySelector('#v0 .btn-g');
   btn.style.display = 'none'; btnG.style.display = 'none';
   const pu = document.getElementById('idPulse'); pu.classList.add('on');
-
   const msgs = ['Analisando imagem…','Lendo rótulos…','Identificando marcas…','Buscando no catálogo…'];
   let mi = 0;
-  const tick = setInterval(() => {
-    document.getElementById('idPs').textContent = msgs[mi = (mi + 1) % msgs.length];
-  }, 1600);
+  const tick = setInterval(() => { document.getElementById('idPs').textContent = msgs[mi = (mi + 1) % msgs.length]; }, 1600);
 
   let catalogHint = '';
   if (catalogLoaded && catalog.length > 0) {
     const sample = catalog.slice(0, 200).map(p => p.id + '|' + p.title + '|' + (p.brand || '')).join('\n');
-    catalogHint = '\n\nCatálogo parcial para referência de IDs:\n' + sample + '\n\n(Total: ' + catalog.length + ' produtos. Use os IDs no formato mostrado.)';
+    catalogHint = '\n\nCatálogo parcial para referência de IDs:\n' + sample + '\n\n(Total: ' + catalog.length + ' produtos.)';
   }
 
   try {
     const parsed = await callVision(imgs.id,
       'Você é um sistema de identificação de produtos de supermercado. Analise a imagem e identifique TODOS os produtos visíveis.\n\n' +
-      'Para cada produto, forneça: nome completo (marca + tipo + peso/volume), marca, categoria, confiança de 0 a 1, texto legível na embalagem, código de barras se visível.' +
+      'IMPORTANTE: Para cada produto, retorne as coordenadas do BOUNDING BOX na imagem como porcentagem (0-100) da largura e altura total.\n' +
+      'x = posição horizontal esquerda (0=esquerda, 100=direita)\n' +
+      'y = posição vertical topo (0=topo, 100=base)\n' +
+      'w = largura do box em %\n' +
+      'h = altura do box em %\n\n' +
+      'Para cada produto forneça: nome completo (marca+tipo+peso), marca, categoria, confiança 0-1, texto legível, barcode se visível, bounding box.' +
       catalogHint +
-      '\n\nRetorne APENAS JSON válido sem markdown:\n{"produtos":[{"nome":"","marca":"","categoria":"","conf":0.0,"texto_legivel":"","barcode":"","catalog_id":""}],"total":0,"obs":""}\n\nSe conseguir associar ao catálogo, preencha catalog_id. Caso contrário, deixe vazio.'
+      '\n\nRetorne APENAS JSON válido sem markdown:\n' +
+      '{"produtos":[{"nome":"","marca":"","categoria":"","conf":0.0,"texto_legivel":"","barcode":"","catalog_id":"","bbox":{"x":0,"y":0,"w":0,"h":0}}],"total":0,"obs":""}'
     );
-
     clearInterval(tick);
     pu.classList.remove('on');
     renderIdentified(parsed);
   } catch (e) {
     clearInterval(tick); pu.classList.remove('on');
     btn.style.display = ''; btnG.style.display = '';
-    showErr('id', e.message || 'Erro. Tente novamente.');
+    showErr('id', e.message || 'Erro.');
   }
 }
 
@@ -347,13 +442,38 @@ function renderIdentified(data) {
   const results = document.getElementById('idResults');
   const prods = data.produtos || [];
 
-  let html = '<div class="id-summary"><div class="id-count">' + prods.length + '</div>' +
+  // Build overlay annotations
+  const annotations = [];
+  prods.forEach(p => {
+    if (p.bbox && (p.bbox.w > 0 || p.bbox.h > 0)) {
+      annotations.push({
+        x: p.bbox.x || 0, y: p.bbox.y || 0,
+        w: p.bbox.w || 8, h: p.bbox.h || 8,
+        label: (p.marca || '').substring(0, 15),
+        status: (p.conf || 0) >= 0.85 ? 'ok' : (p.conf || 0) >= 0.6 ? 'warn' : 'err',
+        conf: p.conf || 0
+      });
+    }
+  });
+
+  let html = '';
+
+  // Draw overlay if we have bounding boxes
+  if (annotations.length > 0 && imgSrcs.id) {
+    const overlayEl = drawOverlay(imgSrcs.id, annotations, 'id');
+    const container = document.createElement('div');
+    container.appendChild(overlayEl);
+    html += container.innerHTML;
+    // We need to actually append the overlay to get the canvas to render
+    // So we'll do it after innerHTML
+  }
+
+  html += '<div class="id-summary"><div class="id-count">' + prods.length + '</div>' +
     '<div class="id-label">produto' + (prods.length !== 1 ? 's' : '') + ' identificado' + (prods.length !== 1 ? 's' : '') + '</div></div>';
 
   if (data.obs) html += '<div class="obs-box">💡 ' + data.obs + '</div>';
 
   let matched = 0, unmatched = 0;
-
   prods.forEach(p => {
     let catMatch = null;
     if (catalogLoaded) {
@@ -361,60 +481,107 @@ function renderIdentified(data) {
       if (!catMatch && p.barcode) catMatch = catalog.find(c => c.barcode === p.barcode);
       if (!catMatch) catMatch = fuzzyMatch(p.nome, p.marca);
     }
-
     if (catMatch) {
       matched++;
       const price = catMatch.price ? catMatch.price.replace(' BRL', '') : '';
       const salePrice = catMatch.sale_price ? catMatch.sale_price.replace(' BRL', '') : '';
       const imgUrl = catMatch.image_link || '';
       const conf = Math.round((p.conf || 0.8) * 100);
-
       html += '<div class="prod-card"><div class="prod-card-inner">' +
-        '<img class="prod-img" src="' + imgUrl + '" alt="' + catMatch.title + '" onerror="this.style.display=\'none\'">' +
+        '<img class="prod-img" src="' + imgUrl + '" alt="" onerror="this.style.display=\'none\'">' +
         '<div class="prod-info"><div class="prod-brand">' + (catMatch.brand || p.marca || '') + '</div>' +
         '<div class="prod-name">' + catMatch.title + '</div><div class="prod-details">' +
         (salePrice ? '<span class="prod-price">R$' + salePrice + '</span><span class="prod-price-old">R$' + price + '</span>' : price ? '<span class="prod-price">R$' + price + '</span>' : '') +
         '<span class="prod-cat">' + (catMatch.categoria || p.categoria || '') + '</span>' +
         (catMatch.barcode ? '<span class="prod-barcode">' + catMatch.barcode + '</span>' : '') +
-        '</div></div>' +
-        '<div class="badge ' + (conf >= 90 ? 'b-ok' : conf >= 70 ? 'b-warn' : 'b-err') + '">' + conf + '%</div>' +
-        '</div></div>';
+        '</div></div><div class="badge ' + (conf >= 90 ? 'b-ok' : conf >= 70 ? 'b-warn' : 'b-err') + '">' + conf + '%</div></div></div>';
     } else {
       unmatched++;
       const conf = Math.round((p.conf || 0.5) * 100);
       html += '<div class="prod-card" style="border-color:var(--warn)"><div class="prod-card-inner">' +
         '<div style="width:90px;height:90px;background:var(--s2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">📦</div>' +
-        '<div class="prod-info"><div class="prod-brand">' + (p.marca || 'Não identificado') + '</div>' +
+        '<div class="prod-info"><div class="prod-brand">' + (p.marca || '?') + '</div>' +
         '<div class="prod-name">' + p.nome + '</div><div class="prod-details">' +
         '<span class="prod-cat">' + (p.categoria || '') + '</span>' +
         (p.texto_legivel ? '<span class="meta-pill">' + p.texto_legivel + '</span>' : '') +
-        (p.barcode ? '<span class="prod-barcode">' + p.barcode + '</span>' : '') +
-        '</div></div>' +
-        '<div class="badge b-warn">' + conf + '%</div></div></div>';
+        '</div></div><div class="badge b-warn">' + conf + '%</div></div></div>';
     }
   });
 
-  if (catalogLoaded) {
-    html += '<div class="obs-box">📊 <strong>Match:</strong> ' + matched + ' no catálogo · ' + unmatched + ' sem correspondência</div>';
+  if (catalogLoaded) html += '<div class="obs-box">📊 <strong>Match:</strong> ' + matched + ' no catálogo · ' + unmatched + ' sem correspondência</div>';
+  html += '<button class="btn btn-g" style="margin-top:12px" onclick="resetIdentify()">Nova identificação</button>';
+
+  // Render: first put the HTML, then render overlay via DOM
+  results.innerHTML = '';
+
+  if (annotations.length > 0 && imgSrcs.id) {
+    const overlay = drawOverlay(imgSrcs.id, annotations, 'id');
+    results.appendChild(overlay);
   }
 
-  html += '<button class="btn btn-g" style="margin-top:12px" onclick="resetIdentify()">Nova identificação</button>';
-  results.innerHTML = html;
+  const rest = document.createElement('div');
+  rest.innerHTML = html.replace(/<div class="overlay-wrap"[\s\S]*?<\/div><\/div>/, ''); // remove any leftover overlay HTML
+  // Actually let's just build rest without overlay
+  results.insertAdjacentHTML('beforeend',
+    '<div class="id-summary"><div class="id-count">' + prods.length + '</div>' +
+    '<div class="id-label">produto' + (prods.length !== 1 ? 's' : '') + ' identificado' + (prods.length !== 1 ? 's' : '') + '</div></div>' +
+    (data.obs ? '<div class="obs-box">💡 ' + data.obs + '</div>' : '')
+  );
+
+  // Re-render product cards
+  let cardsHtml = '';
+  matched = 0; unmatched = 0;
+  prods.forEach(p => {
+    let catMatch = null;
+    if (catalogLoaded) {
+      if (p.catalog_id) catMatch = catalog.find(c => c.id === p.catalog_id);
+      if (!catMatch && p.barcode) catMatch = catalog.find(c => c.barcode === p.barcode);
+      if (!catMatch) catMatch = fuzzyMatch(p.nome, p.marca);
+    }
+    if (catMatch) {
+      matched++;
+      const price = catMatch.price ? catMatch.price.replace(' BRL', '') : '';
+      const salePrice = catMatch.sale_price ? catMatch.sale_price.replace(' BRL', '') : '';
+      const conf = Math.round((p.conf || 0.8) * 100);
+      cardsHtml += '<div class="prod-card"><div class="prod-card-inner">' +
+        '<img class="prod-img" src="' + (catMatch.image_link || '') + '" alt="" onerror="this.style.display=\'none\'">' +
+        '<div class="prod-info"><div class="prod-brand">' + (catMatch.brand || p.marca || '') + '</div>' +
+        '<div class="prod-name">' + catMatch.title + '</div><div class="prod-details">' +
+        (salePrice ? '<span class="prod-price">R$' + salePrice + '</span><span class="prod-price-old">R$' + price + '</span>' : price ? '<span class="prod-price">R$' + price + '</span>' : '') +
+        '<span class="prod-cat">' + (catMatch.categoria || p.categoria || '') + '</span>' +
+        (catMatch.barcode ? '<span class="prod-barcode">' + catMatch.barcode + '</span>' : '') +
+        '</div></div><div class="badge ' + (conf >= 90 ? 'b-ok' : conf >= 70 ? 'b-warn' : 'b-err') + '">' + conf + '%</div></div></div>';
+    } else {
+      unmatched++;
+      const conf = Math.round((p.conf || 0.5) * 100);
+      cardsHtml += '<div class="prod-card" style="border-color:var(--warn)"><div class="prod-card-inner">' +
+        '<div style="width:90px;height:90px;background:var(--s2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">📦</div>' +
+        '<div class="prod-info"><div class="prod-brand">' + (p.marca || '?') + '</div>' +
+        '<div class="prod-name">' + p.nome + '</div><div class="prod-details">' +
+        '<span class="prod-cat">' + (p.categoria || '') + '</span>' +
+        (p.texto_legivel ? '<span class="meta-pill">' + p.texto_legivel + '</span>' : '') +
+        '</div></div><div class="badge b-warn">' + conf + '%</div></div></div>';
+    }
+  });
+
+  if (catalogLoaded) cardsHtml += '<div class="obs-box">📊 <strong>Match:</strong> ' + matched + ' no catálogo · ' + unmatched + ' sem correspondência</div>';
+  cardsHtml += '<button class="btn btn-g" style="margin-top:12px" onclick="resetIdentify()">Nova identificação</button>';
+  results.insertAdjacentHTML('beforeend', cardsHtml);
   results.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function fuzzyMatch(nome, marca) {
   if (!nome) return null;
   const terms = nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/\s+/).filter(t => t.length > 2);
-  let bestMatch = null, bestScore = 0;
+  let best = null, bestS = 0;
   for (const item of catalog) {
     const title = (item.title || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    let score = 0;
-    for (const term of terms) { if (title.includes(term)) score++; }
-    if (marca && item.brand && item.brand.toLowerCase().includes(marca.toLowerCase().substring(0, 4))) score += 2;
-    if (score > bestScore && score >= Math.min(3, terms.length * 0.5)) { bestScore = score; bestMatch = item; }
+    let s = 0;
+    for (const t of terms) { if (title.includes(t)) s++; }
+    if (marca && item.brand && item.brand.toLowerCase().includes(marca.toLowerCase().substring(0, 4))) s += 2;
+    if (s > bestS && s >= Math.min(3, terms.length * 0.5)) { bestS = s; best = item; }
   }
-  return bestMatch;
+  return best;
 }
 
 function resetIdentify() {
@@ -424,7 +591,9 @@ function resetIdentify() {
   document.getElementById('idBtn').disabled = !imgs.id;
 }
 
+// ══════════════════════════════════
 // ── AUDIT GONDOLA ──
+// ══════════════════════════════════
 const CAT_AUDIT = {
   cafe: [
     'MER12020|Café Torrado e Moído Extraforte Melitta 250g|MELITTA',
@@ -481,45 +650,75 @@ const CAT_AUDIT = {
 
 async function audit() {
   const sec = document.getElementById('sel').value;
-  if (!sec) { showErr('audit', 'Selecione uma seção primeiro.'); return; }
-
+  if (!sec) { showErr('audit', 'Selecione uma seção.'); return; }
   hideErr('audit');
   document.getElementById('auditBtn').style.display = 'none';
   document.querySelector('#v1 .btn-g').style.display = 'none';
   const pu = document.getElementById('auditPulse'); pu.classList.add('on');
-
   const msgs = ['Identificando marcas…','Contando facings…','Detectando rupturas…','Calculando conformidade…'];
   let mi = 0;
-  const tick = setInterval(() => {
-    document.getElementById('auditPs').textContent = msgs[mi = (mi + 1) % msgs.length];
-  }, 1600);
+  const tick = setInterval(() => { document.getElementById('auditPs').textContent = msgs[mi = (mi + 1) % msgs.length]; }, 1600);
 
   const prods = (CAT_AUDIT[sec] || []).map(l => { const [id, name, brand] = l.split('|'); return '- [' + id + '] ' + name + ' (' + brand + ')'; }).join('\n');
 
   try {
     const parsed = await callVision(imgs.audit,
-      'Você é um sistema de auditoria de gôndola de supermercado. Analise a imagem shelf por shelf.\n' +
-      'Produtos esperados (catálogo):\n' + prods + '\n\n' +
-      'Use logotipos, cores de embalagem, texto legível e etiquetas de preço para identificar com precisão.\n' +
+      'Você é um sistema de auditoria de gôndola de supermercado. Analise a imagem shelf por shelf.\n\n' +
+      'IMPORTANTE: Para cada produto encontrado e para cada item com baixo estoque, retorne as coordenadas do BOUNDING BOX como porcentagem (0-100).\n' +
+      'x = posição horizontal esquerda, y = posição vertical topo, w = largura, h = altura (tudo em % da imagem).\n\n' +
+      'Produtos esperados:\n' + prods + '\n\n' +
       'Retorne APENAS JSON válido sem markdown:\n' +
-      '{"encontrados":[{"id":"","nome":"","facings":0,"shelf":"","conf":0.0}],"baixo":[{"id":"","nome":"","facings":0,"obs":""}],"ausentes":["id1"],"extras":["descrição"],"score":0,"obs":""}'
+      '{"encontrados":[{"id":"","nome":"","facings":0,"shelf":"","conf":0.0,"bbox":{"x":0,"y":0,"w":0,"h":0}}],' +
+      '"baixo":[{"id":"","nome":"","facings":0,"obs":"","bbox":{"x":0,"y":0,"w":0,"h":0}}],' +
+      '"ausentes":["id1"],"extras":[{"desc":"","bbox":{"x":0,"y":0,"w":0,"h":0}}],"score":0,"obs":""}'
     );
-
-    clearInterval(tick);
-    pu.classList.remove('on');
+    clearInterval(tick); pu.classList.remove('on');
     renderAudit(parsed, CAT_AUDIT[sec] || []);
   } catch (e) {
     clearInterval(tick); pu.classList.remove('on');
     document.getElementById('auditBtn').style.display = '';
     document.querySelector('#v1 .btn-g').style.display = '';
-    showErr('audit', e.message || 'Erro. Tente novamente.');
+    showErr('audit', e.message || 'Erro.');
   }
 }
 
 function renderAudit(d, catList) {
   const results = document.getElementById('auditResults');
-  const ok = d.encontrados || [], low = d.baixo || [], miss = d.ausentes || [], score = d.score || 0;
+  results.innerHTML = '';
+  const ok = d.encontrados || [], low = d.baixo || [], miss = d.ausentes || [],
+        extras = d.extras || [], score = d.score || 0;
 
+  // Build annotations for overlay
+  const annotations = [];
+  ok.forEach(p => {
+    if (p.bbox && (p.bbox.w > 0 || p.bbox.h > 0)) {
+      annotations.push({ x: p.bbox.x, y: p.bbox.y, w: p.bbox.w, h: p.bbox.h,
+        label: (p.nome || '').substring(0, 20), status: 'ok', conf: p.conf });
+    }
+  });
+  low.forEach(p => {
+    if (p.bbox && (p.bbox.w > 0 || p.bbox.h > 0)) {
+      annotations.push({ x: p.bbox.x, y: p.bbox.y, w: p.bbox.w, h: p.bbox.h,
+        label: '⚠ ' + (p.nome || '').substring(0, 18), status: 'warn', conf: null });
+    }
+  });
+  if (Array.isArray(extras)) {
+    extras.forEach(e => {
+      const bb = e && e.bbox;
+      if (bb && (bb.w > 0 || bb.h > 0)) {
+        annotations.push({ x: bb.x, y: bb.y, w: bb.w, h: bb.h,
+          label: 'Extra', status: 'extra', conf: null });
+      }
+    });
+  }
+
+  // Render overlay
+  if (annotations.length > 0 && imgSrcs.audit) {
+    const overlay = drawOverlay(imgSrcs.audit, annotations, 'audit');
+    results.appendChild(overlay);
+  }
+
+  // Score bar
   let html = '<div class="total-bar">' +
     '<div class="total-score" style="color:' + (score >= 80 ? 'var(--ok)' : score >= 55 ? 'var(--warn)' : 'var(--err)') + '">' + score + '%</div>' +
     '<div class="total-info"><div class="total-title">Conformidade da gôndola</div>' +
@@ -531,48 +730,39 @@ function renderAudit(d, catList) {
     '<div class="sc"><div class="sc-n" style="color:var(--err)">' + miss.length + '</div><div class="sc-l">Ausentes</div></div></div>';
 
   if (ok.length) {
-    html += '<div class="shelf-block"><div class="shelf-label">Encontrados na gôndola</div>';
+    html += '<div class="shelf-block"><div class="shelf-label">✅ Encontrados</div>';
     ok.forEach(p => {
       const c = Math.round((p.conf || .9) * 100);
-      let imgHtml = '';
-      if (catalogLoaded) {
-        const catItem = catalog.find(ci => ci.id === p.id);
-        if (catItem && catItem.image_link) {
-          imgHtml = '<img style="width:50px;height:50px;border-radius:6px;object-fit:contain;background:var(--s2)" src="' + catItem.image_link + '" onerror="this.style.display=\'none\'">';
-        }
-      }
-      html += '<div class="item">' + imgHtml + '<div class="item-left"><div class="item-brand">' + p.nome + '</div>' +
-        '<div class="item-meta"><span class="meta-pill">' + p.id + '</span><span class="meta-pill">' + (p.facings || 1) + ' facings</span>' +
+      let imgH = '';
+      if (catalogLoaded) { const ci = catalog.find(x => x.id === p.id); if (ci && ci.image_link) imgH = '<img style="width:50px;height:50px;border-radius:6px;object-fit:contain;background:var(--s2)" src="' + ci.image_link + '" onerror="this.style.display=\'none\'">'; }
+      html += '<div class="item">' + imgH + '<div class="item-left"><div class="item-brand">' + p.nome + '</div>' +
+        '<div class="item-meta"><span class="meta-pill">' + p.id + '</span><span class="meta-pill">' + (p.facings || 1) + 'f</span>' +
         (p.shelf ? '<span class="meta-pill">' + p.shelf + '</span>' : '') + '</div>' +
         '<div class="conf-bar"><div class="conf-fill" style="width:' + c + '%;background:' + (c >= 90 ? 'var(--ok)' : c >= 75 ? 'var(--warn)' : 'var(--err)') + '"></div></div>' +
         '</div><div class="badge ' + (c >= 90 ? 'b-ok' : c >= 75 ? 'b-warn' : 'b-err') + '">' + c + '%</div></div>';
     });
     html += '</div>';
   }
-
   if (low.length) {
     html += '<div class="shelf-block"><div class="shelf-label">⚠️ Baixo estoque</div>';
     low.forEach(p => {
       html += '<div class="item"><div class="item-left"><div class="item-brand">' + p.nome + '</div>' +
-        '<div class="item-meta"><span class="meta-pill">' + p.id + '</span><span class="meta-pill">' + (p.facings || 1) + ' facing</span>' +
+        '<div class="item-meta"><span class="meta-pill">' + p.id + '</span><span class="meta-pill">' + (p.facings || 1) + 'f</span>' +
         (p.obs ? '<span class="meta-pill">' + p.obs + '</span>' : '') + '</div></div><div class="badge b-warn">Repor</div></div>';
     });
     html += '</div>';
   }
-
   if (miss.length) {
-    html += '<div class="shelf-block"><div class="shelf-label">🚨 Ruptura — não encontrado</div>';
+    html += '<div class="shelf-block"><div class="shelf-label">🚨 Ruptura</div>';
     miss.forEach(id => {
       const prod = catList.find(l => l.startsWith(id + '|'));
-      html += '<div class="item"><div class="item-left"><div class="item-name">' + (prod ? prod.split('|')[1] : id) + '</div></div>' +
-        '<div class="badge b-err">Ruptura</div></div>';
+      html += '<div class="item"><div class="item-left"><div class="item-name">' + (prod ? prod.split('|')[1] : id) + '</div></div><div class="badge b-err">Ruptura</div></div>';
     });
     html += '</div>';
   }
-
   if (d.obs) html += '<div class="obs-box">💬 ' + d.obs + '</div>';
   html += '<button class="btn btn-g" style="margin-top:12px" onclick="resetAudit()">Nova auditoria</button>';
-  results.innerHTML = html;
+  results.insertAdjacentHTML('beforeend', html);
   results.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -584,11 +774,8 @@ function resetAudit() {
 }
 
 // ── UTILS ──
-function showErr(prefix, msg) {
-  const el = document.getElementById(prefix + 'Err');
-  el.textContent = '⚠️ ' + msg; el.classList.add('on');
-}
-function hideErr(prefix) { document.getElementById(prefix + 'Err').classList.remove('on'); }
+function showErr(p, m) { const el = document.getElementById(p + 'Err'); el.textContent = '⚠️ ' + m; el.classList.add('on'); }
+function hideErr(p) { document.getElementById(p + 'Err').classList.remove('on'); }
 </script>
 </body>
 </html>
