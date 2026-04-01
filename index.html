@@ -21,7 +21,6 @@ header{padding:14px 20px;background:var(--s);border-bottom:1px solid var(--bd);
 .vtag{font-size:10px;font-family:'DM Mono',monospace;color:var(--ok);
   background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);padding:2px 8px;border-radius:10px}
 main{padding:20px;max-width:720px;margin:0 auto}
-/* API KEY */
 .api-bar{background:var(--s);border:1px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:16px;display:flex;gap:8px;align-items:center}
 .api-bar input{flex:1;background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:8px 12px;
   color:var(--t);font-family:'DM Mono',monospace;font-size:11px;outline:none}
@@ -29,15 +28,12 @@ main{padding:20px;max-width:720px;margin:0 auto}
 .api-bar .api-dot{width:8px;height:8px;border-radius:50%;background:var(--err);flex-shrink:0}
 .api-bar .api-dot.ok{background:var(--ok)}
 .api-bar label{font-size:11px;color:var(--t2);white-space:nowrap}
-/* TABS */
 .mode-tabs{display:flex;gap:2px;background:var(--s2);border-radius:var(--r);padding:3px;margin-bottom:20px}
 .mtab{flex:1;padding:8px 4px;text-align:center;font-size:11px;font-weight:500;border-radius:10px;
   cursor:pointer;color:var(--t2);transition:all .15s}
 .mtab.on{background:var(--s);color:var(--t);box-shadow:0 1px 4px rgba(0,0,0,.3)}
-/* VIEWS */
 .view{display:none}
 .view.on{display:block}
-/* SCORE */
 .score-row{display:flex;gap:10px;margin-bottom:16px}
 .sc{flex:1;background:var(--s);border:1px solid var(--bd);border-radius:var(--r);padding:14px;text-align:center}
 .sc-n{font-size:26px;font-weight:600;font-family:'DM Mono',monospace}
@@ -70,7 +66,6 @@ main{padding:20px;max-width:720px;margin:0 auto}
 .total-sub{font-size:11px;color:var(--t2);margin-top:2px}
 .prog{height:6px;background:var(--bd);border-radius:3px;margin-top:8px;overflow:hidden}
 .prog-fill{height:100%;background:var(--ok);border-radius:3px}
-/* UPLOAD / CAPTURE */
 .czone{background:var(--s);border:1.5px dashed var(--bd);border-radius:var(--r);
   padding:24px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:14px}
 .czone:hover{border-color:var(--acc)}
@@ -97,7 +92,6 @@ main{padding:20px;max-width:720px;margin:0 auto}
 .err-box.on{display:block}
 select{width:100%;padding:11px;background:var(--s);border:1px solid var(--bd);
   border-radius:var(--r);color:var(--t);font-family:'DM Sans',sans-serif;font-size:13px;margin-bottom:14px;cursor:pointer}
-/* PRODUCT CARDS */
 .prod-card{background:var(--s);border:1px solid var(--bd);border-radius:var(--r);
   overflow:hidden;margin-bottom:12px;transition:border-color .2s}
 .prod-card:hover{border-color:var(--acc)}
@@ -107,24 +101,18 @@ select{width:100%;padding:11px;background:var(--s);border:1px solid var(--bd);
 .prod-brand{font-size:10px;font-weight:600;color:var(--acc);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
 .prod-name{font-size:13px;font-weight:500;line-height:1.4;margin-bottom:6px;
   overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-.prod-details{display:flex;flex-wrap:wrap;gap:6px}
+.prod-details{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .prod-price{font-size:14px;font-weight:700;color:var(--ok);font-family:'DM Mono',monospace}
 .prod-price-old{font-size:11px;color:var(--t3);text-decoration:line-through;font-family:'DM Mono',monospace}
 .prod-cat{font-size:10px;color:var(--t2);background:var(--s2);padding:2px 8px;border-radius:6px}
 .prod-barcode{font-size:10px;color:var(--t3);font-family:'DM Mono',monospace}
-.prod-conf{font-size:10px;font-weight:600;padding:3px 8px;border-radius:8px;margin-left:auto;align-self:flex-start}
-/* CATALOG STATUS */
 .cat-status{font-size:11px;color:var(--t3);text-align:center;padding:8px;margin-bottom:12px;
   background:var(--s);border-radius:8px;border:1px solid var(--bd)}
 .cat-status.loaded{color:var(--ok);border-color:rgba(34,197,94,.2)}
-/* IDENTIFIED SECTION */
-.id-section-title{font-size:12px;font-weight:600;color:var(--t2);text-transform:uppercase;
-  letter-spacing:.08em;padding:10px 0 6px;border-bottom:1px solid var(--bd);margin-bottom:10px}
 .id-summary{background:var(--s);border:1px solid var(--bd);border-radius:var(--r);
   padding:14px;margin-bottom:16px;text-align:center}
 .id-count{font-size:28px;font-weight:700;font-family:'DM Mono',monospace;color:var(--acc)}
 .id-label{font-size:11px;color:var(--t2);margin-top:2px}
-.no-match{background:var(--s2);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--warn);margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -133,19 +121,17 @@ select{width:100%;padding:11px;background:var(--s);border:1px solid var(--bd);
   <div class="vtag">Mateus Mais</div>
 </header>
 <main>
-<!-- API KEY -->
 <div class="api-bar">
   <div class="api-dot" id="apiDot"></div>
-  <label>API Key:</label>
-  <input type="password" id="apiKey" placeholder="sk-ant-api03-..." oninput="saveKey(this.value)">
+  <label>OpenAI Key:</label>
+  <input type="password" id="apiKey" placeholder="sk-proj-..." oninput="saveKey(this.value)">
 </div>
-
 <div class="mode-tabs">
   <div class="mtab on" onclick="setMode(0)">📸 Identificar</div>
   <div class="mtab" onclick="setMode(1)">📋 Auditar Gôndola</div>
 </div>
 
-<!-- ══ VIEW 0: IDENTIFICAR PRODUTO ══ -->
+<!-- VIEW 0: IDENTIFICAR -->
 <div class="view on" id="v0">
   <div class="cat-status" id="catStatus">⏳ Carregando catálogo…</div>
   <div class="czone" id="idZone" onclick="document.getElementById('idFile').click()">
@@ -168,7 +154,7 @@ select{width:100%;padding:11px;background:var(--s);border:1px solid var(--bd);
   <div id="idResults"></div>
 </div>
 
-<!-- ══ VIEW 1: AUDITAR GÔNDOLA ══ -->
+<!-- VIEW 1: AUDITAR -->
 <div class="view" id="v1">
   <select id="sel">
     <option value="">— Selecione a seção —</option>
@@ -203,24 +189,59 @@ let catalog = [];
 let catalogLoaded = false;
 const imgs = { id: null, audit: null };
 
-// ── API KEY ──
+// ── API KEY (OpenAI) ──
 function saveKey(v) {
-  try { localStorage.setItem('ak', v); } catch(e) {}
+  try { localStorage.setItem('oai_key', v); } catch(e) {}
   document.getElementById('apiDot').classList.toggle('ok', v.startsWith('sk-'));
 }
 function getKey() {
   const el = document.getElementById('apiKey');
   let k = el.value;
-  if (!k) { try { k = localStorage.getItem('ak') || ''; } catch(e) {} el.value = k; }
+  if (!k) { try { k = localStorage.getItem('oai_key') || ''; } catch(e) {} el.value = k; }
   document.getElementById('apiDot').classList.toggle('ok', k.startsWith('sk-'));
   return k;
 }
 window.addEventListener('DOMContentLoaded', () => { getKey(); loadCatalog(); });
 
+// ── OPENAI VISION CALL ──
+async function callVision(base64img, prompt) {
+  const key = getKey();
+  if (!key) throw new Error('Insira sua API key da OpenAI acima.');
+
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + key
+    },
+    body: JSON.stringify({
+      model: 'gpt-4.1',
+      max_tokens: 4000,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + base64img, detail: 'high' } },
+          { type: 'text', text: prompt }
+        ]
+      }]
+    })
+  });
+
+  if (!res.ok) {
+    const e = await res.json();
+    throw new Error(e.error?.message || 'Erro na API OpenAI (' + res.status + ')');
+  }
+
+  const data = await res.json();
+  const txt = data.choices?.[0]?.message?.content || '';
+  // Strip markdown code fences if present
+  const clean = txt.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+  return JSON.parse(clean);
+}
+
 // ── CATALOG ──
 function loadCatalog() {
   const st = document.getElementById('catStatus');
-  // Try loading CSV from same directory
   Papa.parse('catalogo_completo.csv', {
     download: true,
     header: true,
@@ -228,7 +249,7 @@ function loadCatalog() {
     complete: function(results) {
       catalog = results.data.filter(r => r.id && r.title);
       catalogLoaded = true;
-      st.textContent = `✅ Catálogo carregado: ${catalog.length.toLocaleString()} produtos`;
+      st.textContent = '✅ Catálogo carregado: ' + catalog.length.toLocaleString() + ' produtos';
       st.classList.add('loaded');
     },
     error: function() {
@@ -279,17 +300,13 @@ function checkBtn(prefix) {
   if (prefix === 'id') {
     document.getElementById('idBtn').disabled = !imgs.id;
   } else {
-    const sec = document.getElementById('sel').value;
-    document.getElementById('auditBtn').disabled = !(imgs.audit && sec);
+    document.getElementById('auditBtn').disabled = !(imgs.audit && document.getElementById('sel').value);
   }
 }
 document.getElementById('sel').onchange = () => checkBtn('audit');
 
 // ── IDENTIFY PRODUCTS ──
 async function identify() {
-  const key = getKey();
-  if (!key) { showErr('id', 'Insira sua API key da Anthropic acima.'); return; }
-
   hideErr('id');
   const btn = document.getElementById('idBtn');
   const btnG = document.querySelector('#v0 .btn-g');
@@ -302,57 +319,21 @@ async function identify() {
     document.getElementById('idPs').textContent = msgs[mi = (mi + 1) % msgs.length];
   }, 1600);
 
-  // Build catalog hint (top brands)
   let catalogHint = '';
   if (catalogLoaded && catalog.length > 0) {
-    // Send a sample of product names to help Claude match
-    const sample = catalog.slice(0, 200).map(p => `${p.id}|${p.title}|${p.brand||''}`).join('\n');
-    catalogHint = `\n\nCatálogo parcial para referência de IDs (use o campo "id" quando conseguir identificar):\n${sample}\n\n(Existem ${catalog.length} produtos no catálogo total. Use os IDs no formato mostrado acima.)`;
+    const sample = catalog.slice(0, 200).map(p => p.id + '|' + p.title + '|' + (p.brand || '')).join('\n');
+    catalogHint = '\n\nCatálogo parcial para referência de IDs:\n' + sample + '\n\n(Total: ' + catalog.length + ' produtos. Use os IDs no formato mostrado.)';
   }
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 4000,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: imgs.id } },
-            { type: 'text', text: `Você é um sistema de identificação de produtos de supermercado. Analise a imagem e identifique TODOS os produtos visíveis.
-
-Para cada produto, forneça:
-- nome completo do produto (marca + tipo + peso/volume)
-- marca
-- categoria (ex: Café, Refrigerante, Biscoito, etc.)
-- confiança de 0 a 1
-- qualquer texto legível na embalagem (preço, código de barras, etc.)
-- código de barras se visível
-${catalogHint}
-
-Retorne APENAS JSON sem markdown:
-{"produtos":[{"nome":"","marca":"","categoria":"","conf":0.0,"texto_legivel":"","barcode":"","catalog_id":""}],"total":0,"obs":""}
-
-Se conseguir associar ao catálogo, preencha catalog_id. Caso contrário, deixe vazio.` }
-          ]
-        }]
-      })
-    });
+    const parsed = await callVision(imgs.id,
+      'Você é um sistema de identificação de produtos de supermercado. Analise a imagem e identifique TODOS os produtos visíveis.\n\n' +
+      'Para cada produto, forneça: nome completo (marca + tipo + peso/volume), marca, categoria, confiança de 0 a 1, texto legível na embalagem, código de barras se visível.' +
+      catalogHint +
+      '\n\nRetorne APENAS JSON válido sem markdown:\n{"produtos":[{"nome":"","marca":"","categoria":"","conf":0.0,"texto_legivel":"","barcode":"","catalog_id":""}],"total":0,"obs":""}\n\nSe conseguir associar ao catálogo, preencha catalog_id. Caso contrário, deixe vazio.'
+    );
 
     clearInterval(tick);
-    if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || 'Erro na API'); }
-
-    const data = await res.json();
-    const txt = data.content.find(b => b.type === 'text')?.text || '';
-    const parsed = JSON.parse(txt.replace(/```json|```/g, '').trim());
-
     pu.classList.remove('on');
     renderIdentified(parsed);
   } catch (e) {
@@ -366,33 +347,19 @@ function renderIdentified(data) {
   const results = document.getElementById('idResults');
   const prods = data.produtos || [];
 
-  let html = `<div class="id-summary">
-    <div class="id-count">${prods.length}</div>
-    <div class="id-label">produto${prods.length !== 1 ? 's' : ''} identificado${prods.length !== 1 ? 's' : ''}</div>
-  </div>`;
+  let html = '<div class="id-summary"><div class="id-count">' + prods.length + '</div>' +
+    '<div class="id-label">produto' + (prods.length !== 1 ? 's' : '') + ' identificado' + (prods.length !== 1 ? 's' : '') + '</div></div>';
 
-  if (data.obs) {
-    html += `<div class="obs-box">💡 ${data.obs}</div>`;
-  }
+  if (data.obs) html += '<div class="obs-box">💡 ' + data.obs + '</div>';
 
   let matched = 0, unmatched = 0;
 
   prods.forEach(p => {
-    // Try to match with catalog
     let catMatch = null;
     if (catalogLoaded) {
-      // First try by catalog_id
-      if (p.catalog_id) {
-        catMatch = catalog.find(c => c.id === p.catalog_id);
-      }
-      // Then try by barcode
-      if (!catMatch && p.barcode) {
-        catMatch = catalog.find(c => c.barcode === p.barcode);
-      }
-      // Then fuzzy match by name
-      if (!catMatch) {
-        catMatch = fuzzyMatch(p.nome, p.marca);
-      }
+      if (p.catalog_id) catMatch = catalog.find(c => c.id === p.catalog_id);
+      if (!catMatch && p.barcode) catMatch = catalog.find(c => c.barcode === p.barcode);
+      if (!catMatch) catMatch = fuzzyMatch(p.nome, p.marca);
     }
 
     if (catMatch) {
@@ -402,47 +369,36 @@ function renderIdentified(data) {
       const imgUrl = catMatch.image_link || '';
       const conf = Math.round((p.conf || 0.8) * 100);
 
-      html += `<div class="prod-card">
-        <div class="prod-card-inner">
-          <img class="prod-img" src="${imgUrl}" alt="${catMatch.title}" onerror="this.style.display='none'">
-          <div class="prod-info">
-            <div class="prod-brand">${catMatch.brand || p.marca || ''}</div>
-            <div class="prod-name">${catMatch.title}</div>
-            <div class="prod-details">
-              ${salePrice ? `<span class="prod-price">R$${salePrice}</span><span class="prod-price-old">R$${price}</span>` : price ? `<span class="prod-price">R$${price}</span>` : ''}
-              <span class="prod-cat">${catMatch.categoria || p.categoria || ''}</span>
-              ${catMatch.barcode ? `<span class="prod-barcode">${catMatch.barcode}</span>` : ''}
-            </div>
-          </div>
-          <div class="prod-conf badge ${conf >= 90 ? 'b-ok' : conf >= 70 ? 'b-warn' : 'b-err'}">${conf}%</div>
-        </div>
-      </div>`;
+      html += '<div class="prod-card"><div class="prod-card-inner">' +
+        '<img class="prod-img" src="' + imgUrl + '" alt="' + catMatch.title + '" onerror="this.style.display=\'none\'">' +
+        '<div class="prod-info"><div class="prod-brand">' + (catMatch.brand || p.marca || '') + '</div>' +
+        '<div class="prod-name">' + catMatch.title + '</div><div class="prod-details">' +
+        (salePrice ? '<span class="prod-price">R$' + salePrice + '</span><span class="prod-price-old">R$' + price + '</span>' : price ? '<span class="prod-price">R$' + price + '</span>' : '') +
+        '<span class="prod-cat">' + (catMatch.categoria || p.categoria || '') + '</span>' +
+        (catMatch.barcode ? '<span class="prod-barcode">' + catMatch.barcode + '</span>' : '') +
+        '</div></div>' +
+        '<div class="badge ' + (conf >= 90 ? 'b-ok' : conf >= 70 ? 'b-warn' : 'b-err') + '">' + conf + '%</div>' +
+        '</div></div>';
     } else {
       unmatched++;
       const conf = Math.round((p.conf || 0.5) * 100);
-      html += `<div class="prod-card" style="border-color:var(--warn)">
-        <div class="prod-card-inner">
-          <div style="width:90px;height:90px;background:var(--s2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">📦</div>
-          <div class="prod-info">
-            <div class="prod-brand">${p.marca || 'Não identificado'}</div>
-            <div class="prod-name">${p.nome}</div>
-            <div class="prod-details">
-              <span class="prod-cat">${p.categoria || ''}</span>
-              ${p.texto_legivel ? `<span class="meta-pill">${p.texto_legivel}</span>` : ''}
-              ${p.barcode ? `<span class="prod-barcode">${p.barcode}</span>` : ''}
-            </div>
-          </div>
-          <div class="prod-conf badge b-warn">${conf}%</div>
-        </div>
-      </div>`;
+      html += '<div class="prod-card" style="border-color:var(--warn)"><div class="prod-card-inner">' +
+        '<div style="width:90px;height:90px;background:var(--s2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">📦</div>' +
+        '<div class="prod-info"><div class="prod-brand">' + (p.marca || 'Não identificado') + '</div>' +
+        '<div class="prod-name">' + p.nome + '</div><div class="prod-details">' +
+        '<span class="prod-cat">' + (p.categoria || '') + '</span>' +
+        (p.texto_legivel ? '<span class="meta-pill">' + p.texto_legivel + '</span>' : '') +
+        (p.barcode ? '<span class="prod-barcode">' + p.barcode + '</span>' : '') +
+        '</div></div>' +
+        '<div class="badge b-warn">' + conf + '%</div></div></div>';
     }
   });
 
   if (catalogLoaded) {
-    html += `<div class="obs-box">📊 <strong>Match:</strong> ${matched} encontrado${matched !== 1 ? 's' : ''} no catálogo · ${unmatched} sem correspondência</div>`;
+    html += '<div class="obs-box">📊 <strong>Match:</strong> ' + matched + ' no catálogo · ' + unmatched + ' sem correspondência</div>';
   }
 
-  html += `<button class="btn btn-g" style="margin-top:12px" onclick="resetIdentify()">Nova identificação</button>`;
+  html += '<button class="btn btn-g" style="margin-top:12px" onclick="resetIdentify()">Nova identificação</button>';
   results.innerHTML = html;
   results.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -451,21 +407,12 @@ function fuzzyMatch(nome, marca) {
   if (!nome) return null;
   const terms = nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/\s+/).filter(t => t.length > 2);
   let bestMatch = null, bestScore = 0;
-
   for (const item of catalog) {
     const title = (item.title || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     let score = 0;
-    for (const term of terms) {
-      if (title.includes(term)) score++;
-    }
-    // Bonus for brand match
-    if (marca && item.brand && item.brand.toLowerCase().includes(marca.toLowerCase().substring(0, 4))) {
-      score += 2;
-    }
-    if (score > bestScore && score >= Math.min(3, terms.length * 0.5)) {
-      bestScore = score;
-      bestMatch = item;
-    }
+    for (const term of terms) { if (title.includes(term)) score++; }
+    if (marca && item.brand && item.brand.toLowerCase().includes(marca.toLowerCase().substring(0, 4))) score += 2;
+    if (score > bestScore && score >= Math.min(3, terms.length * 0.5)) { bestScore = score; bestMatch = item; }
   }
   return bestMatch;
 }
@@ -483,16 +430,16 @@ const CAT_AUDIT = {
     'MER12020|Café Torrado e Moído Extraforte Melitta 250g|MELITTA',
     'MER38044|Café Torrado e Moído Tradicional Melitta 250g|MELITTA',
     'MER39873|Café Torrado e Moído Especial Melitta 500g|MELITTA',
-    'MER07683|Café Lor Pouch Ultimo 250g|L\'OR',
-    'MER25422|Café Gourmet Cerrado Mineiro L\'Or 250g|L\'OR',
-    'MER25390|Café Intenso L\'Or Torras Gourmet 250g|L\'OR',
-    'MER25388|Café Gourmet Sul de Minas L\'Or 250g|L\'OR',
-    'MER25423|Café Lor Delicado 250g|L\'OR',
-    'MER07679|Café Solúvel Classique L\'Or Vidro 84g|L\'OR',
-    'MER07236|Café Solúvel Intense L\'Or Vidro 130g|L\'OR',
-    'MER07680|Café Solúvel Montanhas Capixabas L\'Or 84g|L\'OR',
-    'MER07743|Café Solúvel Sul da Bahia L\'Or 84g|L\'OR',
-    'MER15640|Café Imola Intenso L\'Or 250g|L\'OR',
+    "MER07683|Café Lor Pouch Ultimo 250g|L'OR",
+    "MER25422|Café Gourmet Cerrado Mineiro L'Or 250g|L'OR",
+    "MER25390|Café Intenso L'Or Torras Gourmet 250g|L'OR",
+    "MER25388|Café Gourmet Sul de Minas L'Or 250g|L'OR",
+    "MER25423|Café Lor Delicado 250g|L'OR",
+    "MER07679|Café Solúvel Classique L'Or Vidro 84g|L'OR",
+    "MER07236|Café Solúvel Intense L'Or Vidro 130g|L'OR",
+    "MER07680|Café Solúvel Montanhas Capixabas L'Or 84g|L'OR",
+    "MER07743|Café Solúvel Sul da Bahia L'Or 84g|L'OR",
+    "MER15640|Café Imola Intenso L'Or 250g|L'OR",
     'MER02512|Café Torrado Tradicional Pilão a Vácuo 250g|PILAO',
     'MER07645|Café Torrado Extraforte Pilão 250g|PILAO',
     'MER02760|Café Torrado Tradicional Pilão Pacote 250g|PILAO',
@@ -504,7 +451,7 @@ const CAT_AUDIT = {
     'MER09594|Café Solúvel Nescafé Tradição 100g|NESCAFE',
     'MER02421|Café Solúvel Granulado Clássico Santa Clara Vidro|SANTA CLARA',
     'MER07692|Café Puro a Vácuo 250g|PURO',
-    'MER07635|Café Puro Almofada 250g|PURO',
+    'MER07635|Café Puro Almofada 250g|PURO'
   ],
   cappuccino: [
     'MER14707|Cappuccino Classic 3 Corações Pote 200g|3 CORACOES',
@@ -517,24 +464,22 @@ const CAT_AUDIT = {
     'MER02432|Cappuccino Chocolate Maratá 200g|MARATA',
     'MER38567|Cappuccino Solúvel Tradicional Melitta Lata|MELITTA',
     'MER02061|Cappuccino Chocolate com Avelã Melitta Lata 200g|MELITTA',
-    'MER38570|Cappuccino Chocolate Melitta Lata|MELITTA',
+    'MER38570|Cappuccino Chocolate Melitta Lata|MELITTA'
   ],
   soluvel: [
     'MER09593|Café Solúvel Nescafé Original 100g|NESCAFE',
     'MER09594|Café Solúvel Nescafé Tradição 100g|NESCAFE',
     'MER33397|Café Solúvel Nescafé Original 200g|NESCAFE',
-    'MER07679|Café Solúvel Classique L\'Or Vidro 84g|L\'OR',
-    'MER07236|Café Solúvel Intense L\'Or Vidro 130g|L\'OR',
-    'MER07680|Café Solúvel Montanhas Capixabas L\'Or 84g|L\'OR',
+    "MER07679|Café Solúvel Classique L'Or Vidro 84g|L'OR",
+    "MER07236|Café Solúvel Intense L'Or Vidro 130g|L'OR",
+    "MER07680|Café Solúvel Montanhas Capixabas L'Or 84g|L'OR",
     'MER02421|Café Solúvel Granulado Clássico Santa Clara Vidro|SANTA CLARA',
     'MER05957|Café Solúvel Granulado Clássico Santa Clara|SANTA CLARA',
-    'MER23431|Café Solúvel Liofilizado Santa Clara 50g|SANTA CLARA',
+    'MER23431|Café Solúvel Liofilizado Santa Clara 50g|SANTA CLARA'
   ]
 };
 
 async function audit() {
-  const key = getKey();
-  if (!key) { showErr('audit', 'Insira sua API key da Anthropic acima.'); return; }
   const sec = document.getElementById('sel').value;
   if (!sec) { showErr('audit', 'Selecione uma seção primeiro.'); return; }
 
@@ -549,42 +494,18 @@ async function audit() {
     document.getElementById('auditPs').textContent = msgs[mi = (mi + 1) % msgs.length];
   }, 1600);
 
-  const prods = (CAT_AUDIT[sec] || []).map(l => { const [id, name, brand] = l.split('|'); return `- [${id}] ${name} (${brand})`; }).join('\n');
+  const prods = (CAT_AUDIT[sec] || []).map(l => { const [id, name, brand] = l.split('|'); return '- [' + id + '] ' + name + ' (' + brand + ')'; }).join('\n');
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 2000,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: imgs.audit } },
-            { type: 'text', text: `Você é um sistema de auditoria de gôndola de supermercado. Analise a imagem shelf por shelf.
-Produtos esperados (catálogo):
-${prods}
-Use logotipos, cores de embalagem, texto legível e etiquetas de preço para identificar com precisão.
-Retorne APENAS JSON sem markdown:
-{"encontrados":[{"id":"","nome":"","facings":0,"shelf":"","conf":0.0}],"baixo":[{"id":"","nome":"","facings":0,"obs":""}],"ausentes":["id1"],"extras":["descrição"],"score":0,"obs":""}` }
-          ]
-        }]
-      })
-    });
+    const parsed = await callVision(imgs.audit,
+      'Você é um sistema de auditoria de gôndola de supermercado. Analise a imagem shelf por shelf.\n' +
+      'Produtos esperados (catálogo):\n' + prods + '\n\n' +
+      'Use logotipos, cores de embalagem, texto legível e etiquetas de preço para identificar com precisão.\n' +
+      'Retorne APENAS JSON válido sem markdown:\n' +
+      '{"encontrados":[{"id":"","nome":"","facings":0,"shelf":"","conf":0.0}],"baixo":[{"id":"","nome":"","facings":0,"obs":""}],"ausentes":["id1"],"extras":["descrição"],"score":0,"obs":""}'
+    );
 
     clearInterval(tick);
-    if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || 'Erro na API'); }
-
-    const data = await res.json();
-    const txt = data.content.find(b => b.type === 'text')?.text || '';
-    const parsed = JSON.parse(txt.replace(/```json|```/g, '').trim());
-
     pu.classList.remove('on');
     renderAudit(parsed, CAT_AUDIT[sec] || []);
   } catch (e) {
@@ -599,62 +520,58 @@ function renderAudit(d, catList) {
   const results = document.getElementById('auditResults');
   const ok = d.encontrados || [], low = d.baixo || [], miss = d.ausentes || [], score = d.score || 0;
 
-  let html = `<div class="total-bar">
-    <div class="total-score" style="color:${score >= 80 ? 'var(--ok)' : score >= 55 ? 'var(--warn)' : 'var(--err)'}">${score}%</div>
-    <div class="total-info">
-      <div class="total-title">Conformidade da gôndola</div>
-      <div class="total-sub">${ok.length} encontrados · ${low.length} baixo estoque · ${miss.length} ausentes</div>
-      <div class="prog"><div class="prog-fill" style="width:${score}%;background:${score >= 80 ? 'var(--ok)' : score >= 55 ? 'var(--warn)' : 'var(--err)'}"></div></div>
-    </div>
-  </div>
-  <div class="score-row">
-    <div class="sc"><div class="sc-n" style="color:var(--ok)">${ok.length}</div><div class="sc-l">Encontrados</div></div>
-    <div class="sc"><div class="sc-n" style="color:var(--warn)">${low.length}</div><div class="sc-l">Baixo</div></div>
-    <div class="sc"><div class="sc-n" style="color:var(--err)">${miss.length}</div><div class="sc-l">Ausentes</div></div>
-  </div>`;
+  let html = '<div class="total-bar">' +
+    '<div class="total-score" style="color:' + (score >= 80 ? 'var(--ok)' : score >= 55 ? 'var(--warn)' : 'var(--err)') + '">' + score + '%</div>' +
+    '<div class="total-info"><div class="total-title">Conformidade da gôndola</div>' +
+    '<div class="total-sub">' + ok.length + ' encontrados · ' + low.length + ' baixo estoque · ' + miss.length + ' ausentes</div>' +
+    '<div class="prog"><div class="prog-fill" style="width:' + score + '%;background:' + (score >= 80 ? 'var(--ok)' : score >= 55 ? 'var(--warn)' : 'var(--err)') + '"></div></div></div></div>' +
+    '<div class="score-row">' +
+    '<div class="sc"><div class="sc-n" style="color:var(--ok)">' + ok.length + '</div><div class="sc-l">Encontrados</div></div>' +
+    '<div class="sc"><div class="sc-n" style="color:var(--warn)">' + low.length + '</div><div class="sc-l">Baixo</div></div>' +
+    '<div class="sc"><div class="sc-n" style="color:var(--err)">' + miss.length + '</div><div class="sc-l">Ausentes</div></div></div>';
 
   if (ok.length) {
-    html += `<div class="shelf-block"><div class="shelf-label">Encontrados na gôndola</div>`;
+    html += '<div class="shelf-block"><div class="shelf-label">Encontrados na gôndola</div>';
     ok.forEach(p => {
       const c = Math.round((p.conf || .9) * 100);
-      // Try to get image from catalog
       let imgHtml = '';
       if (catalogLoaded) {
         const catItem = catalog.find(ci => ci.id === p.id);
         if (catItem && catItem.image_link) {
-          imgHtml = `<img class="prod-img" src="${catItem.image_link}" alt="" style="width:50px;height:50px;border-radius:6px;object-fit:contain;background:var(--s2)" onerror="this.style.display='none'">`;
+          imgHtml = '<img style="width:50px;height:50px;border-radius:6px;object-fit:contain;background:var(--s2)" src="' + catItem.image_link + '" onerror="this.style.display=\'none\'">';
         }
       }
-      html += `<div class="item">${imgHtml}<div class="item-left"><div class="item-brand">${p.nome}</div>
-        <div class="item-meta"><span class="meta-pill">${p.id}</span><span class="meta-pill">${p.facings || 1} facings</span>${p.shelf ? `<span class="meta-pill">${p.shelf}</span>` : ''}</div>
-        <div class="conf-bar"><div class="conf-fill" style="width:${c}%;background:${c >= 90 ? 'var(--ok)' : c >= 75 ? 'var(--warn)' : 'var(--err)'}"></div></div>
-      </div><div class="badge ${c >= 90 ? 'b-ok' : c >= 75 ? 'b-warn' : 'b-err'}">${c}%</div></div>`;
+      html += '<div class="item">' + imgHtml + '<div class="item-left"><div class="item-brand">' + p.nome + '</div>' +
+        '<div class="item-meta"><span class="meta-pill">' + p.id + '</span><span class="meta-pill">' + (p.facings || 1) + ' facings</span>' +
+        (p.shelf ? '<span class="meta-pill">' + p.shelf + '</span>' : '') + '</div>' +
+        '<div class="conf-bar"><div class="conf-fill" style="width:' + c + '%;background:' + (c >= 90 ? 'var(--ok)' : c >= 75 ? 'var(--warn)' : 'var(--err)') + '"></div></div>' +
+        '</div><div class="badge ' + (c >= 90 ? 'b-ok' : c >= 75 ? 'b-warn' : 'b-err') + '">' + c + '%</div></div>';
     });
-    html += `</div>`;
+    html += '</div>';
   }
 
   if (low.length) {
-    html += `<div class="shelf-block"><div class="shelf-label">⚠️ Baixo estoque</div>`;
+    html += '<div class="shelf-block"><div class="shelf-label">⚠️ Baixo estoque</div>';
     low.forEach(p => {
-      html += `<div class="item"><div class="item-left"><div class="item-brand">${p.nome}</div>
-        <div class="item-meta"><span class="meta-pill">${p.id}</span><span class="meta-pill">${p.facings || 1} facing</span>${p.obs ? `<span class="meta-pill">${p.obs}</span>` : ''}</div>
-      </div><div class="badge b-warn">Repor</div></div>`;
+      html += '<div class="item"><div class="item-left"><div class="item-brand">' + p.nome + '</div>' +
+        '<div class="item-meta"><span class="meta-pill">' + p.id + '</span><span class="meta-pill">' + (p.facings || 1) + ' facing</span>' +
+        (p.obs ? '<span class="meta-pill">' + p.obs + '</span>' : '') + '</div></div><div class="badge b-warn">Repor</div></div>';
     });
-    html += `</div>`;
+    html += '</div>';
   }
 
   if (miss.length) {
-    html += `<div class="shelf-block"><div class="shelf-label">🚨 Ruptura — não encontrado</div>`;
+    html += '<div class="shelf-block"><div class="shelf-label">🚨 Ruptura — não encontrado</div>';
     miss.forEach(id => {
       const prod = catList.find(l => l.startsWith(id + '|'));
-      html += `<div class="item"><div class="item-left"><div class="item-name">${prod ? prod.split('|')[1] : id}</div></div>
-        <div class="badge b-err">Ruptura</div></div>`;
+      html += '<div class="item"><div class="item-left"><div class="item-name">' + (prod ? prod.split('|')[1] : id) + '</div></div>' +
+        '<div class="badge b-err">Ruptura</div></div>';
     });
-    html += `</div>`;
+    html += '</div>';
   }
 
-  if (d.obs) html += `<div class="obs-box">💬 ${d.obs}</div>`;
-  html += `<button class="btn btn-g" style="margin-top:12px" onclick="resetAudit()">Nova auditoria</button>`;
+  if (d.obs) html += '<div class="obs-box">💬 ' + d.obs + '</div>';
+  html += '<button class="btn btn-g" style="margin-top:12px" onclick="resetAudit()">Nova auditoria</button>';
   results.innerHTML = html;
   results.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -671,9 +588,7 @@ function showErr(prefix, msg) {
   const el = document.getElementById(prefix + 'Err');
   el.textContent = '⚠️ ' + msg; el.classList.add('on');
 }
-function hideErr(prefix) {
-  document.getElementById(prefix + 'Err').classList.remove('on');
-}
+function hideErr(prefix) { document.getElementById(prefix + 'Err').classList.remove('on'); }
 </script>
 </body>
 </html>
