@@ -13,7 +13,7 @@
   --t:#e8eaf0;--t2:#8b91b0;--t3:#4a5070;--r:12px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-height:100vh}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t);min-height:100vh;-webkit-tap-highlight-color:transparent}
 header{padding:14px 20px;background:var(--s);border-bottom:1px solid var(--bd);
   display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
 .logo{display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px}
@@ -112,19 +112,59 @@ select{width:100%;padding:11px;background:var(--s);border:1px solid var(--bd);
   padding:14px;margin-bottom:16px;text-align:center}
 .id-count{font-size:28px;font-weight:700;font-family:'DM Mono',monospace;color:var(--acc)}
 .id-label{font-size:11px;color:var(--t2);margin-top:2px}
-/* OVERLAY */
-.overlay-wrap{position:relative;margin-bottom:14px;border-radius:var(--r);overflow:hidden;background:var(--s)}
-.overlay-wrap img{width:100%;display:block}
-.overlay-wrap canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
-.legend{display:flex;gap:12px;justify-content:center;padding:8px;font-size:10px;color:var(--t2);flex-wrap:wrap}
-.legend-item{display:flex;align-items:center;gap:4px}
-.legend-dot{width:10px;height:10px;border-radius:3px}
-.toggle-overlay{font-size:11px;color:var(--acc);background:none;border:1px solid var(--acc);
-  border-radius:8px;padding:4px 12px;cursor:pointer;margin:0 auto 12px;display:block;font-family:'DM Sans',sans-serif}
-.toggle-overlay:hover{background:rgba(79,124,255,.1)}
+
+/* ═══ INTERACTIVE OVERLAY ═══ */
+.ov-wrap{position:relative;margin-bottom:14px;border-radius:var(--r);overflow:hidden;background:#000;user-select:none}
+.ov-wrap>img{width:100%;display:block}
+.ov-box{position:absolute;border:2px solid;border-radius:4px;cursor:pointer;
+  transition:box-shadow .15s,transform .15s;z-index:2}
+.ov-box:hover,.ov-box.active{box-shadow:0 0 16px 2px currentColor;transform:scale(1.01);z-index:3}
+.ov-tag{position:absolute;top:-1px;left:-1px;font-size:9px;font-weight:700;font-family:'DM Mono',monospace;
+  padding:1px 5px;border-radius:0 0 4px 0;color:#fff;white-space:nowrap;pointer-events:none;line-height:1.4}
+.ov-conf{position:absolute;top:-1px;right:-1px;font-size:8px;font-weight:600;font-family:'DM Mono',monospace;
+  padding:1px 4px;border-radius:0 0 0 4px;color:#fff;pointer-events:none}
+
+/* ═══ TOOLTIP / POPUP ═══ */
+.ov-tooltip{display:none;position:fixed;z-index:100;background:var(--s);border:1px solid var(--bd);
+  border-radius:var(--r);box-shadow:0 8px 32px rgba(0,0,0,.6);padding:10px;width:260px;
+  pointer-events:none;animation:fadeIn .15s ease}
+.ov-tooltip.on{display:flex;gap:10px}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.ov-tooltip .tt-img{width:72px;height:72px;border-radius:8px;object-fit:contain;background:var(--s2);flex-shrink:0}
+.ov-tooltip .tt-info{flex:1;min-width:0}
+.ov-tooltip .tt-brand{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+.ov-tooltip .tt-name{font-size:11px;font-weight:500;line-height:1.3;margin-bottom:4px;color:var(--t);
+  overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.ov-tooltip .tt-price{font-size:13px;font-weight:700;font-family:'DM Mono',monospace;color:var(--ok)}
+.ov-tooltip .tt-cat{font-size:9px;color:var(--t2);margin-top:2px}
+.ov-tooltip .tt-match{font-size:9px;padding:2px 6px;border-radius:4px;margin-top:4px;display:inline-block;font-weight:600}
+.ov-tooltip .tt-bar{display:flex;align-items:center;gap:4px;margin-top:4px}
+.ov-tooltip .tt-swatch{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+
+/* LEGEND */
+.ov-legend{display:flex;gap:6px;flex-wrap:wrap;padding:10px;background:var(--s);border:1px solid var(--bd);
+  border-radius:0 0 var(--r) var(--r);margin-top:-2px;margin-bottom:14px}
+.ov-leg-item{display:flex;align-items:center;gap:4px;font-size:9px;color:var(--t2);
+  padding:2px 6px;background:var(--s2);border-radius:6px;cursor:pointer;transition:all .15s;border:1px solid transparent}
+.ov-leg-item:hover,.ov-leg-item.hl{border-color:currentColor;color:var(--t)}
+.ov-leg-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
 </style>
 </head>
 <body>
+
+<!-- TOOLTIP (global, repositioned on hover) -->
+<div class="ov-tooltip" id="tooltip">
+  <img class="tt-img" id="ttImg" src="" alt="">
+  <div class="tt-info">
+    <div class="tt-brand" id="ttBrand"></div>
+    <div class="tt-name" id="ttName"></div>
+    <div class="tt-price" id="ttPrice"></div>
+    <div class="tt-cat" id="ttCat"></div>
+    <div class="tt-bar"><div class="tt-swatch" id="ttSwatch"></div><span id="ttConf" style="font-size:9px;color:var(--t2)"></span></div>
+    <div class="tt-match" id="ttMatch"></div>
+  </div>
+</div>
+
 <header>
   <div class="logo"><div class="dot"></div>Auditoria Gôndola</div>
   <div class="vtag">Mateus Mais</div>
@@ -140,7 +180,6 @@ select{width:100%;padding:11px;background:var(--s);border:1px solid var(--bd);
   <div class="mtab" onclick="setMode(1)">📋 Auditar Gôndola</div>
 </div>
 
-<!-- VIEW 0: IDENTIFICAR -->
 <div class="view on" id="v0">
   <div class="cat-status" id="catStatus">⏳ Carregando catálogo…</div>
   <div class="czone" id="idZone" onclick="document.getElementById('idFile').click()">
@@ -148,7 +187,7 @@ select{width:100%;padding:11px;background:var(--s);border:1px solid var(--bd);
     <div id="idPh" style="padding:20px">
       <div style="font-size:28px;margin-bottom:8px">📷</div>
       <div style="font-size:13px;font-weight:500;margin-bottom:4px">Foto do produto ou prateleira</div>
-      <div style="font-size:11px;color:var(--t2)">Toque para abrir câmera · Identifica todos os produtos da foto</div>
+      <div style="font-size:11px;color:var(--t2)">Toque para abrir câmera</div>
     </div>
   </div>
   <input type="file" id="idFile" accept="image/*" capture="environment" onchange="loadImg(this,'id')" style="display:none">
@@ -156,14 +195,13 @@ select{width:100%;padding:11px;background:var(--s);border:1px solid var(--bd);
   <div class="pulse" id="idPulse">
     <div class="ring"><div class="ring-c"></div></div>
     <div style="font-size:13px;font-weight:500;margin-bottom:4px" id="idPl">Analisando…</div>
-    <div style="font-size:11px;color:var(--t2)" id="idPs">Identificando produtos na imagem</div>
+    <div style="font-size:11px;color:var(--t2)" id="idPs">Identificando produtos</div>
   </div>
   <button class="btn btn-p" id="idBtn" disabled onclick="identify()">🔍 Identificar Produtos</button>
   <button class="btn btn-g" onclick="document.getElementById('idFile').click()">Trocar imagem</button>
   <div id="idResults"></div>
 </div>
 
-<!-- VIEW 1: AUDITAR -->
 <div class="view" id="v1">
   <select id="sel">
     <option value="">— Selecione a seção —</option>
@@ -194,588 +232,446 @@ select{width:100%;padding:11px;background:var(--s);border:1px solid var(--bd);
 
 <script>
 // ── STATE ──
-let catalog = [];
-let catalogLoaded = false;
-const imgs = { id: null, audit: null };
-const imgSrcs = { id: null, audit: null };
+let catalog=[], catalogLoaded=false;
+const imgs={id:null,audit:null}, imgSrcs={id:null,audit:null};
 
 // ── API KEY ──
-function saveKey(v) {
-  try { localStorage.setItem('oai_key', v); } catch(e) {}
-  document.getElementById('apiDot').classList.toggle('ok', v.startsWith('sk-'));
-}
-function getKey() {
-  const el = document.getElementById('apiKey');
-  let k = el.value;
-  if (!k) { try { k = localStorage.getItem('oai_key') || ''; } catch(e) {} el.value = k; }
-  document.getElementById('apiDot').classList.toggle('ok', k.startsWith('sk-'));
-  return k;
-}
-window.addEventListener('DOMContentLoaded', () => { getKey(); loadCatalog(); });
+function saveKey(v){try{localStorage.setItem('oai_key',v)}catch(e){}document.getElementById('apiDot').classList.toggle('ok',v.startsWith('sk-'))}
+function getKey(){const el=document.getElementById('apiKey');let k=el.value;if(!k){try{k=localStorage.getItem('oai_key')||''}catch(e){}el.value=k}document.getElementById('apiDot').classList.toggle('ok',k.startsWith('sk-'));return k}
+window.addEventListener('DOMContentLoaded',()=>{getKey();loadCatalog()});
 
 // ── OPENAI VISION ──
-async function callVision(base64img, prompt) {
-  const key = getKey();
-  if (!key) throw new Error('Insira sua API key da OpenAI acima.');
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
-    body: JSON.stringify({
-      model: 'gpt-4.1',
-      max_tokens: 4000,
-      messages: [{ role: 'user', content: [
-        { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + base64img, detail: 'high' } },
-        { type: 'text', text: prompt }
-      ]}]
-    })
+async function callVision(b64,prompt){
+  const key=getKey();if(!key)throw new Error('Insira sua API key da OpenAI.');
+  const res=await fetch('https://api.openai.com/v1/chat/completions',{
+    method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+    body:JSON.stringify({model:'gpt-4.1',max_tokens:4000,messages:[{role:'user',content:[
+      {type:'image_url',image_url:{url:'data:image/jpeg;base64,'+b64,detail:'high'}},
+      {type:'text',text:prompt}
+    ]}]})
   });
-  if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || 'Erro OpenAI (' + res.status + ')'); }
-  const data = await res.json();
-  const txt = data.choices?.[0]?.message?.content || '';
-  return JSON.parse(txt.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim());
+  if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'Erro OpenAI')}
+  const data=await res.json();
+  const txt=data.choices?.[0]?.message?.content||'';
+  return JSON.parse(txt.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim());
 }
 
 // ── CATALOG ──
-function loadCatalog() {
-  const st = document.getElementById('catStatus');
-  Papa.parse('catalogo_completo.csv', {
-    download: true, header: true, skipEmptyLines: true,
-    complete: function(r) {
-      catalog = r.data.filter(r => r.id && r.title);
-      catalogLoaded = true;
-      st.textContent = '✅ Catálogo: ' + catalog.length.toLocaleString() + ' produtos';
-      st.classList.add('loaded');
-    },
-    error: function() { st.textContent = '⚠️ Catálogo não encontrado.'; st.style.color = 'var(--warn)'; }
+function loadCatalog(){
+  const st=document.getElementById('catStatus');
+  Papa.parse('catalogo_completo.csv',{download:true,header:true,skipEmptyLines:true,
+    complete:r=>{catalog=r.data.filter(r=>r.id&&r.title);catalogLoaded=true;
+      st.textContent='✅ Catálogo: '+catalog.length.toLocaleString()+' produtos';st.classList.add('loaded')},
+    error:()=>{st.textContent='⚠️ Catálogo não encontrado.';st.style.color='var(--warn)'}
   });
 }
 
 // ── TABS ──
-function setMode(n) {
-  document.querySelectorAll('.mtab').forEach((t, i) => t.classList.toggle('on', i === n));
-  document.querySelectorAll('.view').forEach((v, i) => v.classList.toggle('on', i === n));
+function setMode(n){
+  document.querySelectorAll('.mtab').forEach((t,i)=>t.classList.toggle('on',i===n));
+  document.querySelectorAll('.view').forEach((v,i)=>v.classList.toggle('on',i===n));
 }
 
-// ── IMAGE LOADING ──
-function loadImg(inp, prefix) {
-  const f = inp.files[0]; if (!f) return;
-  const zone = document.getElementById(prefix + 'Zone');
-  const ph = document.getElementById(prefix + 'Ph');
-  const img = zone.querySelector('img');
-  if (f.type.startsWith('image/')) {
-    const r = new FileReader();
-    r.onload = e => {
-      img.src = e.target.result; img.style.display = 'block';
-      ph.style.display = 'none'; zone.classList.add('has');
-      imgs[prefix] = e.target.result.split(',')[1];
-      imgSrcs[prefix] = e.target.result;
-      checkBtn(prefix);
-    };
+// ── IMAGE ──
+function loadImg(inp,prefix){
+  const f=inp.files[0];if(!f)return;
+  const zone=document.getElementById(prefix+'Zone'),ph=document.getElementById(prefix+'Ph'),img=zone.querySelector('img');
+  if(f.type.startsWith('image/')){
+    const r=new FileReader();
+    r.onload=e=>{img.src=e.target.result;img.style.display='block';ph.style.display='none';zone.classList.add('has');
+      imgs[prefix]=e.target.result.split(',')[1];imgSrcs[prefix]=e.target.result;checkBtn(prefix)};
     r.readAsDataURL(f);
-  } else if (f.type.startsWith('video/')) {
-    const v = document.createElement('video'); v.preload = 'metadata';
-    v.onloadeddata = () => { v.currentTime = 1; };
-    v.onseeked = () => {
-      const c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight;
-      c.getContext('2d').drawImage(v, 0, 0);
-      const d = c.toDataURL('image/jpeg', .9);
-      img.src = d; img.style.display = 'block'; ph.style.display = 'none';
-      zone.classList.add('has'); imgs[prefix] = d.split(',')[1]; imgSrcs[prefix] = d;
-      checkBtn(prefix); URL.revokeObjectURL(v.src);
-    };
-    v.src = URL.createObjectURL(f);
+  } else if(f.type.startsWith('video/')){
+    const v=document.createElement('video');v.preload='metadata';
+    v.onloadeddata=()=>{v.currentTime=1};
+    v.onseeked=()=>{const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;
+      c.getContext('2d').drawImage(v,0,0);const d=c.toDataURL('image/jpeg',.9);
+      img.src=d;img.style.display='block';ph.style.display='none';zone.classList.add('has');
+      imgs[prefix]=d.split(',')[1];imgSrcs[prefix]=d;checkBtn(prefix);URL.revokeObjectURL(v.src)};
+    v.src=URL.createObjectURL(f);
   }
 }
-function checkBtn(prefix) {
-  if (prefix === 'id') document.getElementById('idBtn').disabled = !imgs.id;
-  else document.getElementById('auditBtn').disabled = !(imgs.audit && document.getElementById('sel').value);
+function checkBtn(p){
+  if(p==='id')document.getElementById('idBtn').disabled=!imgs.id;
+  else document.getElementById('auditBtn').disabled=!(imgs.audit&&document.getElementById('sel').value);
 }
-document.getElementById('sel').onchange = () => checkBtn('audit');
+document.getElementById('sel').onchange=()=>checkBtn('audit');
 
 // ══════════════════════════════════════
-// ── OVERLAY: desenhar na imagem ──
+//  COLOR SYSTEM: unique color per product
 // ══════════════════════════════════════
-function drawOverlay(imgSrc, annotations, containerId) {
-  // annotations = [{ x, y, w, h, label, status:'ok'|'warn'|'err'|'extra', conf }]
-  const wrap = document.createElement('div');
-  wrap.className = 'overlay-wrap';
-  wrap.id = containerId + '-overlay';
-
-  const img = new Image();
-  img.onload = function() {
-    wrap.style.maxWidth = '100%';
-    const imgEl = document.createElement('img');
-    imgEl.src = imgSrc;
-    imgEl.alt = 'Foto analisada';
-    wrap.appendChild(imgEl);
-
-    const canvas = document.createElement('canvas');
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-    wrap.appendChild(canvas);
-
-    const ctx = canvas.getContext('2d');
-    const W = canvas.width, H = canvas.height;
-
-    const colors = {
-      ok:    { fill: 'rgba(34,197,94,0.18)',  stroke: '#22c55e', text: '#22c55e' },
-      warn:  { fill: 'rgba(245,158,11,0.18)', stroke: '#f59e0b', text: '#f59e0b' },
-      err:   { fill: 'rgba(239,68,68,0.22)',  stroke: '#ef4444', text: '#ef4444' },
-      extra: { fill: 'rgba(79,124,255,0.18)', stroke: '#4f7cff', text: '#4f7cff' }
-    };
-
-    annotations.forEach(a => {
-      const c = colors[a.status] || colors.ok;
-      const ax = (a.x / 100) * W;
-      const ay = (a.y / 100) * H;
-      const aw = (a.w / 100) * W;
-      const ah = (a.h / 100) * H;
-
-      // Draw box
-      ctx.fillStyle = c.fill;
-      ctx.fillRect(ax, ay, aw, ah);
-      ctx.strokeStyle = c.stroke;
-      ctx.lineWidth = Math.max(2, W * 0.003);
-      ctx.setLineDash([]);
-      ctx.strokeRect(ax, ay, aw, ah);
-
-      // Draw label background
-      const fontSize = Math.max(11, Math.min(16, W * 0.018));
-      ctx.font = '600 ' + fontSize + 'px "DM Sans", sans-serif';
-      const label = a.label || '';
-      const metrics = ctx.measureText(label);
-      const lw = metrics.width + 10;
-      const lh = fontSize + 8;
-      const lx = ax;
-      const ly = ay - lh - 2;
-
-      if (ly > 0 && label) {
-        ctx.fillStyle = c.stroke;
-        ctx.beginPath();
-        ctx.roundRect(lx, ly, lw, lh, 4);
-        ctx.fill();
-        ctx.fillStyle = '#fff';
-        ctx.fillText(label, lx + 5, ly + fontSize + 1);
-      } else if (label) {
-        // Draw inside top of box
-        ctx.fillStyle = c.stroke;
-        ctx.beginPath();
-        ctx.roundRect(ax + 2, ay + 2, lw, lh, 4);
-        ctx.fill();
-        ctx.fillStyle = '#fff';
-        ctx.fillText(label, ax + 7, ay + fontSize + 3);
-      }
-
-      // Draw confidence badge
-      if (a.conf) {
-        const confTxt = Math.round(a.conf * 100) + '%';
-        const cm = ctx.measureText(confTxt);
-        const cx = ax + aw - cm.width - 12;
-        const cy = ay + 2;
-        ctx.fillStyle = c.stroke;
-        ctx.beginPath();
-        ctx.roundRect(cx, cy, cm.width + 10, lh, 4);
-        ctx.fill();
-        ctx.fillStyle = '#fff';
-        ctx.fillText(confTxt, cx + 5, cy + fontSize + 1);
-      }
-    });
-  };
-  img.src = imgSrc;
-
-  // Legend
-  const leg = document.createElement('div');
-  leg.className = 'legend';
-  leg.innerHTML =
-    '<div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div>OK</div>' +
-    '<div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>Baixo estoque</div>' +
-    '<div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Ruptura</div>' +
-    '<div class="legend-item"><div class="legend-dot" style="background:#4f7cff"></div>Extra</div>';
-  wrap.appendChild(leg);
-
-  return wrap;
+const PALETTE=[
+  '#e6194b','#3cb44b','#4363d8','#f58231','#911eb4',
+  '#42d4f4','#f032e6','#bfef45','#fabed4','#469990',
+  '#dcbeff','#9A6324','#fffac8','#800000','#aaffc3',
+  '#808000','#ffd8b1','#000075','#a9a9a9','#e6beff',
+  '#ff6f61','#6b5b95','#88b04b','#f7cac9','#92a8d1',
+  '#955251','#b565a7','#009b77','#dd4124','#45b8ac'
+];
+function getProductColor(name,idx,map){
+  const key=(name||'').toLowerCase().trim();
+  if(map.has(key))return map.get(key);
+  const c=PALETTE[map.size%PALETTE.length];
+  map.set(key,c);
+  return c;
 }
 
-// ══════════════════════════════════
-// ── IDENTIFY PRODUCTS ──
-// ══════════════════════════════════
-async function identify() {
-  hideErr('id');
-  const btn = document.getElementById('idBtn');
-  const btnG = document.querySelector('#v0 .btn-g');
-  btn.style.display = 'none'; btnG.style.display = 'none';
-  const pu = document.getElementById('idPulse'); pu.classList.add('on');
-  const msgs = ['Analisando imagem…','Lendo rótulos…','Identificando marcas…','Buscando no catálogo…'];
-  let mi = 0;
-  const tick = setInterval(() => { document.getElementById('idPs').textContent = msgs[mi = (mi + 1) % msgs.length]; }, 1600);
+// ══════════════════════════════════════
+//  INTERACTIVE OVERLAY (HTML divs)
+// ══════════════════════════════════════
+function buildOverlay(imgSrc, boxes, container){
+  // boxes = [{ x,y,w,h, label, nome, conf, catalogMatch, status, productKey }]
+  const wrap=document.createElement('div');
+  wrap.className='ov-wrap';
 
-  let catalogHint = '';
-  if (catalogLoaded && catalog.length > 0) {
-    const sample = catalog.slice(0, 200).map(p => p.id + '|' + p.title + '|' + (p.brand || '')).join('\n');
-    catalogHint = '\n\nCatálogo parcial para referência de IDs:\n' + sample + '\n\n(Total: ' + catalog.length + ' produtos.)';
-  }
+  const img=document.createElement('img');
+  img.src=imgSrc; img.alt='Foto analisada';
+  wrap.appendChild(img);
 
-  try {
-    const parsed = await callVision(imgs.id,
-      'Você é um sistema de identificação de produtos de supermercado. Analise a imagem e identifique TODOS os produtos visíveis.\n\n' +
-      'IMPORTANTE: Para cada produto, retorne as coordenadas do BOUNDING BOX na imagem como porcentagem (0-100) da largura e altura total.\n' +
-      'x = posição horizontal esquerda (0=esquerda, 100=direita)\n' +
-      'y = posição vertical topo (0=topo, 100=base)\n' +
-      'w = largura do box em %\n' +
-      'h = altura do box em %\n\n' +
-      'Para cada produto forneça: nome completo (marca+tipo+peso), marca, categoria, confiança 0-1, texto legível, barcode se visível, bounding box.' +
-      catalogHint +
-      '\n\nRetorne APENAS JSON válido sem markdown:\n' +
-      '{"produtos":[{"nome":"","marca":"","categoria":"","conf":0.0,"texto_legivel":"","barcode":"","catalog_id":"","bbox":{"x":0,"y":0,"w":0,"h":0}}],"total":0,"obs":""}'
-    );
-    clearInterval(tick);
-    pu.classList.remove('on');
-    renderIdentified(parsed);
-  } catch (e) {
-    clearInterval(tick); pu.classList.remove('on');
-    btn.style.display = ''; btnG.style.display = '';
-    showErr('id', e.message || 'Erro.');
-  }
-}
+  // Assign colors
+  const colorMap=new Map();
+  boxes.forEach(b=>{b._color=getProductColor(b.productKey||b.nome,0,colorMap)});
 
-function renderIdentified(data) {
-  const results = document.getElementById('idResults');
-  const prods = data.produtos || [];
+  // Create box divs
+  boxes.forEach((b,i)=>{
+    const div=document.createElement('div');
+    div.className='ov-box';
+    div.style.left=b.x+'%'; div.style.top=b.y+'%';
+    div.style.width=b.w+'%'; div.style.height=b.h+'%';
+    div.style.borderColor=b._color;
+    div.style.background=b._color+'22';
+    div.style.color=b._color;
+    div.dataset.idx=i;
 
-  // Build overlay annotations
-  const annotations = [];
-  prods.forEach(p => {
-    if (p.bbox && (p.bbox.w > 0 || p.bbox.h > 0)) {
-      annotations.push({
-        x: p.bbox.x || 0, y: p.bbox.y || 0,
-        w: p.bbox.w || 8, h: p.bbox.h || 8,
-        label: (p.marca || '').substring(0, 15),
-        status: (p.conf || 0) >= 0.85 ? 'ok' : (p.conf || 0) >= 0.6 ? 'warn' : 'err',
-        conf: p.conf || 0
+    // Tag label
+    const tag=document.createElement('div');
+    tag.className='ov-tag';
+    tag.style.background=b._color;
+    tag.textContent=(b.label||'').substring(0,18);
+    div.appendChild(tag);
+
+    // Conf badge
+    if(b.conf){
+      const conf=document.createElement('div');
+      conf.className='ov-conf';
+      conf.style.background=b._color;
+      conf.textContent=Math.round(b.conf*100)+'%';
+      div.appendChild(conf);
+    }
+
+    // Hover / touch events
+    div.addEventListener('mouseenter',e=>showTooltip(e,b));
+    div.addEventListener('mousemove',e=>moveTooltip(e));
+    div.addEventListener('mouseleave',hideTooltip);
+    div.addEventListener('touchstart',e=>{e.preventDefault();showTooltip(e.touches[0],b);div.classList.add('active')},{passive:false});
+    div.addEventListener('touchend',()=>{setTimeout(hideTooltip,2000);div.classList.remove('active')});
+
+    wrap.appendChild(div);
+  });
+
+  container.appendChild(wrap);
+
+  // Legend (clickable, highlights same product)
+  const leg=document.createElement('div');
+  leg.className='ov-legend';
+  const seen=new Set();
+  boxes.forEach(b=>{
+    const key=(b.productKey||b.nome||'').toLowerCase().trim();
+    if(seen.has(key))return; seen.add(key);
+    const item=document.createElement('div');
+    item.className='ov-leg-item';
+    item.style.color=b._color;
+    item.innerHTML='<div class="ov-leg-dot" style="background:'+b._color+'"></div>'+(b.label||b.nome||'?');
+    item.addEventListener('mouseenter',()=>{
+      wrap.querySelectorAll('.ov-box').forEach(el=>{
+        const bi=boxes[el.dataset.idx];
+        const bk=(bi.productKey||bi.nome||'').toLowerCase().trim();
+        el.style.opacity=bk===key?'1':'0.2';
       });
-    }
+      item.classList.add('hl');
+    });
+    item.addEventListener('mouseleave',()=>{
+      wrap.querySelectorAll('.ov-box').forEach(el=>el.style.opacity='1');
+      item.classList.remove('hl');
+    });
+    leg.appendChild(item);
   });
-
-  let html = '';
-
-  // Draw overlay if we have bounding boxes
-  if (annotations.length > 0 && imgSrcs.id) {
-    const overlayEl = drawOverlay(imgSrcs.id, annotations, 'id');
-    const container = document.createElement('div');
-    container.appendChild(overlayEl);
-    html += container.innerHTML;
-    // We need to actually append the overlay to get the canvas to render
-    // So we'll do it after innerHTML
-  }
-
-  html += '<div class="id-summary"><div class="id-count">' + prods.length + '</div>' +
-    '<div class="id-label">produto' + (prods.length !== 1 ? 's' : '') + ' identificado' + (prods.length !== 1 ? 's' : '') + '</div></div>';
-
-  if (data.obs) html += '<div class="obs-box">💡 ' + data.obs + '</div>';
-
-  let matched = 0, unmatched = 0;
-  prods.forEach(p => {
-    let catMatch = null;
-    if (catalogLoaded) {
-      if (p.catalog_id) catMatch = catalog.find(c => c.id === p.catalog_id);
-      if (!catMatch && p.barcode) catMatch = catalog.find(c => c.barcode === p.barcode);
-      if (!catMatch) catMatch = fuzzyMatch(p.nome, p.marca);
-    }
-    if (catMatch) {
-      matched++;
-      const price = catMatch.price ? catMatch.price.replace(' BRL', '') : '';
-      const salePrice = catMatch.sale_price ? catMatch.sale_price.replace(' BRL', '') : '';
-      const imgUrl = catMatch.image_link || '';
-      const conf = Math.round((p.conf || 0.8) * 100);
-      html += '<div class="prod-card"><div class="prod-card-inner">' +
-        '<img class="prod-img" src="' + imgUrl + '" alt="" onerror="this.style.display=\'none\'">' +
-        '<div class="prod-info"><div class="prod-brand">' + (catMatch.brand || p.marca || '') + '</div>' +
-        '<div class="prod-name">' + catMatch.title + '</div><div class="prod-details">' +
-        (salePrice ? '<span class="prod-price">R$' + salePrice + '</span><span class="prod-price-old">R$' + price + '</span>' : price ? '<span class="prod-price">R$' + price + '</span>' : '') +
-        '<span class="prod-cat">' + (catMatch.categoria || p.categoria || '') + '</span>' +
-        (catMatch.barcode ? '<span class="prod-barcode">' + catMatch.barcode + '</span>' : '') +
-        '</div></div><div class="badge ' + (conf >= 90 ? 'b-ok' : conf >= 70 ? 'b-warn' : 'b-err') + '">' + conf + '%</div></div></div>';
-    } else {
-      unmatched++;
-      const conf = Math.round((p.conf || 0.5) * 100);
-      html += '<div class="prod-card" style="border-color:var(--warn)"><div class="prod-card-inner">' +
-        '<div style="width:90px;height:90px;background:var(--s2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">📦</div>' +
-        '<div class="prod-info"><div class="prod-brand">' + (p.marca || '?') + '</div>' +
-        '<div class="prod-name">' + p.nome + '</div><div class="prod-details">' +
-        '<span class="prod-cat">' + (p.categoria || '') + '</span>' +
-        (p.texto_legivel ? '<span class="meta-pill">' + p.texto_legivel + '</span>' : '') +
-        '</div></div><div class="badge b-warn">' + conf + '%</div></div></div>';
-    }
-  });
-
-  if (catalogLoaded) html += '<div class="obs-box">📊 <strong>Match:</strong> ' + matched + ' no catálogo · ' + unmatched + ' sem correspondência</div>';
-  html += '<button class="btn btn-g" style="margin-top:12px" onclick="resetIdentify()">Nova identificação</button>';
-
-  // Render: first put the HTML, then render overlay via DOM
-  results.innerHTML = '';
-
-  if (annotations.length > 0 && imgSrcs.id) {
-    const overlay = drawOverlay(imgSrcs.id, annotations, 'id');
-    results.appendChild(overlay);
-  }
-
-  const rest = document.createElement('div');
-  rest.innerHTML = html.replace(/<div class="overlay-wrap"[\s\S]*?<\/div><\/div>/, ''); // remove any leftover overlay HTML
-  // Actually let's just build rest without overlay
-  results.insertAdjacentHTML('beforeend',
-    '<div class="id-summary"><div class="id-count">' + prods.length + '</div>' +
-    '<div class="id-label">produto' + (prods.length !== 1 ? 's' : '') + ' identificado' + (prods.length !== 1 ? 's' : '') + '</div></div>' +
-    (data.obs ? '<div class="obs-box">💡 ' + data.obs + '</div>' : '')
-  );
-
-  // Re-render product cards
-  let cardsHtml = '';
-  matched = 0; unmatched = 0;
-  prods.forEach(p => {
-    let catMatch = null;
-    if (catalogLoaded) {
-      if (p.catalog_id) catMatch = catalog.find(c => c.id === p.catalog_id);
-      if (!catMatch && p.barcode) catMatch = catalog.find(c => c.barcode === p.barcode);
-      if (!catMatch) catMatch = fuzzyMatch(p.nome, p.marca);
-    }
-    if (catMatch) {
-      matched++;
-      const price = catMatch.price ? catMatch.price.replace(' BRL', '') : '';
-      const salePrice = catMatch.sale_price ? catMatch.sale_price.replace(' BRL', '') : '';
-      const conf = Math.round((p.conf || 0.8) * 100);
-      cardsHtml += '<div class="prod-card"><div class="prod-card-inner">' +
-        '<img class="prod-img" src="' + (catMatch.image_link || '') + '" alt="" onerror="this.style.display=\'none\'">' +
-        '<div class="prod-info"><div class="prod-brand">' + (catMatch.brand || p.marca || '') + '</div>' +
-        '<div class="prod-name">' + catMatch.title + '</div><div class="prod-details">' +
-        (salePrice ? '<span class="prod-price">R$' + salePrice + '</span><span class="prod-price-old">R$' + price + '</span>' : price ? '<span class="prod-price">R$' + price + '</span>' : '') +
-        '<span class="prod-cat">' + (catMatch.categoria || p.categoria || '') + '</span>' +
-        (catMatch.barcode ? '<span class="prod-barcode">' + catMatch.barcode + '</span>' : '') +
-        '</div></div><div class="badge ' + (conf >= 90 ? 'b-ok' : conf >= 70 ? 'b-warn' : 'b-err') + '">' + conf + '%</div></div></div>';
-    } else {
-      unmatched++;
-      const conf = Math.round((p.conf || 0.5) * 100);
-      cardsHtml += '<div class="prod-card" style="border-color:var(--warn)"><div class="prod-card-inner">' +
-        '<div style="width:90px;height:90px;background:var(--s2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">📦</div>' +
-        '<div class="prod-info"><div class="prod-brand">' + (p.marca || '?') + '</div>' +
-        '<div class="prod-name">' + p.nome + '</div><div class="prod-details">' +
-        '<span class="prod-cat">' + (p.categoria || '') + '</span>' +
-        (p.texto_legivel ? '<span class="meta-pill">' + p.texto_legivel + '</span>' : '') +
-        '</div></div><div class="badge b-warn">' + conf + '%</div></div></div>';
-    }
-  });
-
-  if (catalogLoaded) cardsHtml += '<div class="obs-box">📊 <strong>Match:</strong> ' + matched + ' no catálogo · ' + unmatched + ' sem correspondência</div>';
-  cardsHtml += '<button class="btn btn-g" style="margin-top:12px" onclick="resetIdentify()">Nova identificação</button>';
-  results.insertAdjacentHTML('beforeend', cardsHtml);
-  results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  container.appendChild(leg);
 }
 
-function fuzzyMatch(nome, marca) {
-  if (!nome) return null;
-  const terms = nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/\s+/).filter(t => t.length > 2);
-  let best = null, bestS = 0;
-  for (const item of catalog) {
-    const title = (item.title || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    let s = 0;
-    for (const t of terms) { if (title.includes(t)) s++; }
-    if (marca && item.brand && item.brand.toLowerCase().includes(marca.toLowerCase().substring(0, 4))) s += 2;
-    if (s > bestS && s >= Math.min(3, terms.length * 0.5)) { bestS = s; best = item; }
+// ── TOOLTIP ──
+function showTooltip(e,b){
+  const tt=document.getElementById('tooltip');
+  const ttImg=document.getElementById('ttImg');
+  const cm=b.catalogMatch;
+
+  if(cm&&cm.image_link){ttImg.src=cm.image_link;ttImg.style.display='block'}
+  else{ttImg.style.display='none'}
+
+  document.getElementById('ttBrand').textContent=cm?cm.brand||b.marca||'':b.marca||'';
+  document.getElementById('ttBrand').style.color=b._color;
+  document.getElementById('ttName').textContent=cm?cm.title:b.nome||'';
+
+  const price=cm&&cm.price?cm.price.replace(' BRL',''):'';
+  const sale=cm&&cm.sale_price?cm.sale_price.replace(' BRL',''):'';
+  document.getElementById('ttPrice').textContent=sale?'R$'+sale:price?'R$'+price:'';
+
+  document.getElementById('ttCat').textContent=cm?cm.categoria||'':b.categoria||'';
+  document.getElementById('ttSwatch').style.background=b._color;
+  document.getElementById('ttConf').textContent=b.conf?Math.round(b.conf*100)+'% confiança':'';
+
+  const match=document.getElementById('ttMatch');
+  if(cm){match.textContent='✅ No catálogo · '+cm.id;match.style.background='rgba(34,197,94,.15)';match.style.color='#22c55e'}
+  else{match.textContent='⚠️ Não encontrado no catálogo';match.style.background='rgba(245,158,11,.15)';match.style.color='#f59e0b'}
+
+  tt.classList.add('on');
+  moveTooltip(e);
+}
+function moveTooltip(e){
+  const tt=document.getElementById('tooltip');
+  const x=e.clientX||e.pageX,y=e.clientY||e.pageY;
+  const vw=window.innerWidth,vh=window.innerHeight;
+  let left=x+16,top=y-60;
+  if(left+270>vw)left=x-276;
+  if(top<8)top=8;
+  if(top+180>vh)top=vh-180;
+  tt.style.left=left+'px';tt.style.top=top+'px';
+}
+function hideTooltip(){document.getElementById('tooltip').classList.remove('on')}
+
+// ══════════════════════════════════════
+//  IDENTIFY
+// ══════════════════════════════════════
+async function identify(){
+  hideErr('id');
+  document.getElementById('idBtn').style.display='none';
+  document.querySelector('#v0 .btn-g').style.display='none';
+  const pu=document.getElementById('idPulse');pu.classList.add('on');
+  const msgs=['Analisando…','Lendo rótulos…','Identificando marcas…','Buscando catálogo…'];
+  let mi=0;const tick=setInterval(()=>{document.getElementById('idPs').textContent=msgs[mi=(mi+1)%msgs.length]},1600);
+
+  let hint='';
+  if(catalogLoaded)hint='\n\nCatálogo parcial:\n'+catalog.slice(0,200).map(p=>p.id+'|'+p.title+'|'+(p.brand||'')).join('\n')+'\n(Total: '+catalog.length+')';
+
+  try{
+    const d=await callVision(imgs.id,
+      'Você é um sistema de identificação de produtos de supermercado. Identifique TODOS os produtos visíveis.\n\n'+
+      'IMPORTANTE: Retorne o BOUNDING BOX de cada produto como % da imagem (x,y = canto superior esquerdo, w,h = tamanho).\n'+
+      'Se o MESMO produto aparece em vários locais, retorne uma entrada para CADA ocorrência (mesmo nome/id, bbox diferente).\n\n'+
+      'Campos: nome (marca+tipo+peso), marca, categoria, conf (0-1), texto_legivel, barcode, catalog_id, bbox {x,y,w,h}.'+hint+
+      '\n\nRetorne APENAS JSON:\n{"produtos":[{"nome":"","marca":"","categoria":"","conf":0.0,"texto_legivel":"","barcode":"","catalog_id":"","bbox":{"x":0,"y":0,"w":0,"h":0}}],"total":0,"obs":""}');
+    clearInterval(tick);pu.classList.remove('on');
+    renderIdentified(d);
+  }catch(e){
+    clearInterval(tick);pu.classList.remove('on');
+    document.getElementById('idBtn').style.display='';document.querySelector('#v0 .btn-g').style.display='';
+    showErr('id',e.message);
+  }
+}
+
+function renderIdentified(data){
+  const results=document.getElementById('idResults');results.innerHTML='';
+  const prods=data.produtos||[];
+
+  // Match with catalog & build boxes
+  const boxes=[];
+  let matched=0,unmatched=0;
+  prods.forEach(p=>{
+    let cm=null;
+    if(catalogLoaded){
+      if(p.catalog_id)cm=catalog.find(c=>c.id===p.catalog_id);
+      if(!cm&&p.barcode)cm=catalog.find(c=>c.barcode===p.barcode);
+      if(!cm)cm=fuzzyMatch(p.nome,p.marca);
+    }
+    if(cm)matched++;else unmatched++;
+    if(p.bbox&&(p.bbox.w>0||p.bbox.h>0)){
+      boxes.push({x:p.bbox.x,y:p.bbox.y,w:p.bbox.w,h:p.bbox.h,
+        label:p.marca||'',nome:p.nome,marca:p.marca,categoria:p.categoria,
+        conf:p.conf,catalogMatch:cm,status:cm?'ok':'warn',
+        productKey:cm?cm.id:p.nome});
+    }
+  });
+
+  // Overlay
+  if(boxes.length&&imgSrcs.id)buildOverlay(imgSrcs.id,boxes,results);
+
+  // Summary + cards
+  let html='<div class="id-summary"><div class="id-count">'+prods.length+'</div>'+
+    '<div class="id-label">produto'+(prods.length!==1?'s':'')+' identificado'+(prods.length!==1?'s':'')+'</div></div>';
+  if(data.obs)html+='<div class="obs-box">💡 '+data.obs+'</div>';
+
+  // Deduplicated product cards
+  const seen=new Map();
+  prods.forEach(p=>{
+    let cm=null;
+    if(catalogLoaded){
+      if(p.catalog_id)cm=catalog.find(c=>c.id===p.catalog_id);
+      if(!cm&&p.barcode)cm=catalog.find(c=>c.barcode===p.barcode);
+      if(!cm)cm=fuzzyMatch(p.nome,p.marca);
+    }
+    const key=cm?cm.id:p.nome;
+    if(seen.has(key)){seen.get(key).count++;return}
+    seen.set(key,{p,cm,count:1});
+  });
+
+  seen.forEach(({p,cm,count})=>{
+    if(cm){
+      const price=cm.price?cm.price.replace(' BRL',''):'';
+      const sale=cm.sale_price?cm.sale_price.replace(' BRL',''):'';
+      const conf=Math.round((p.conf||.8)*100);
+      html+='<div class="prod-card"><div class="prod-card-inner">'+
+        '<img class="prod-img" src="'+(cm.image_link||'')+'" alt="" onerror="this.style.display=\'none\'">'+
+        '<div class="prod-info"><div class="prod-brand">'+(cm.brand||p.marca||'')+'</div>'+
+        '<div class="prod-name">'+cm.title+(count>1?' <span style="color:var(--acc)">(×'+count+')</span>':'')+'</div><div class="prod-details">'+
+        (sale?'<span class="prod-price">R$'+sale+'</span><span class="prod-price-old">R$'+price+'</span>':price?'<span class="prod-price">R$'+price+'</span>':'')+
+        '<span class="prod-cat">'+(cm.categoria||'')+'</span>'+
+        '</div></div><div class="badge '+(conf>=90?'b-ok':conf>=70?'b-warn':'b-err')+'">'+conf+'%</div></div></div>';
+    }else{
+      const conf=Math.round((p.conf||.5)*100);
+      html+='<div class="prod-card" style="border-color:var(--warn)"><div class="prod-card-inner">'+
+        '<div style="width:90px;height:90px;background:var(--s2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">📦</div>'+
+        '<div class="prod-info"><div class="prod-brand">'+(p.marca||'?')+'</div>'+
+        '<div class="prod-name">'+p.nome+(count>1?' <span style="color:var(--acc)">(×'+count+')</span>':'')+'</div><div class="prod-details">'+
+        '<span class="prod-cat">'+(p.categoria||'')+'</span>'+
+        '</div></div><div class="badge b-warn">'+conf+'%</div></div></div>';
+    }
+  });
+
+  if(catalogLoaded)html+='<div class="obs-box">📊 <strong>Match:</strong> '+matched+' no catálogo · '+unmatched+' sem correspondência</div>';
+  html+='<button class="btn btn-g" style="margin-top:12px" onclick="resetIdentify()">Nova identificação</button>';
+  results.insertAdjacentHTML('beforeend',html);
+  results.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function fuzzyMatch(nome,marca){
+  if(!nome)return null;
+  const terms=nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').split(/\s+/).filter(t=>t.length>2);
+  let best=null,bestS=0;
+  for(const item of catalog){
+    const title=(item.title||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    let s=0;for(const t of terms){if(title.includes(t))s++}
+    if(marca&&item.brand&&item.brand.toLowerCase().includes(marca.toLowerCase().substring(0,4)))s+=2;
+    if(s>bestS&&s>=Math.min(3,terms.length*.5)){bestS=s;best=item}
   }
   return best;
 }
-
-function resetIdentify() {
-  document.getElementById('idResults').innerHTML = '';
-  document.getElementById('idBtn').style.display = '';
-  document.querySelector('#v0 .btn-g').style.display = '';
-  document.getElementById('idBtn').disabled = !imgs.id;
+function resetIdentify(){
+  document.getElementById('idResults').innerHTML='';
+  document.getElementById('idBtn').style.display='';document.querySelector('#v0 .btn-g').style.display='';
+  document.getElementById('idBtn').disabled=!imgs.id;
 }
 
-// ══════════════════════════════════
-// ── AUDIT GONDOLA ──
-// ══════════════════════════════════
-const CAT_AUDIT = {
-  cafe: [
-    'MER12020|Café Torrado e Moído Extraforte Melitta 250g|MELITTA',
-    'MER38044|Café Torrado e Moído Tradicional Melitta 250g|MELITTA',
-    'MER39873|Café Torrado e Moído Especial Melitta 500g|MELITTA',
-    "MER07683|Café Lor Pouch Ultimo 250g|L'OR",
-    "MER25422|Café Gourmet Cerrado Mineiro L'Or 250g|L'OR",
-    "MER25390|Café Intenso L'Or Torras Gourmet 250g|L'OR",
-    "MER25388|Café Gourmet Sul de Minas L'Or 250g|L'OR",
-    "MER25423|Café Lor Delicado 250g|L'OR",
-    "MER07679|Café Solúvel Classique L'Or Vidro 84g|L'OR",
-    "MER07236|Café Solúvel Intense L'Or Vidro 130g|L'OR",
-    "MER07680|Café Solúvel Montanhas Capixabas L'Or 84g|L'OR",
-    "MER07743|Café Solúvel Sul da Bahia L'Or 84g|L'OR",
-    "MER15640|Café Imola Intenso L'Or 250g|L'OR",
-    'MER02512|Café Torrado Tradicional Pilão a Vácuo 250g|PILAO',
-    'MER07645|Café Torrado Extraforte Pilão 250g|PILAO',
-    'MER02760|Café Torrado Tradicional Pilão Pacote 250g|PILAO',
-    'MER02282|Café Solúvel Pilão Cafeteria Sachê 40g|PILAO',
-    'MER02639|Café Tradicional Maratá a Vácuo 250g|MARATA',
-    'MER02363|Café Extraforte Almofada Maratá 250g|MARATA',
-    'MER07711|Café Tradicional Maratá 100g|MARATA',
-    'MER09593|Café Solúvel Nescafé Original 100g|NESCAFE',
-    'MER09594|Café Solúvel Nescafé Tradição 100g|NESCAFE',
-    'MER02421|Café Solúvel Granulado Clássico Santa Clara Vidro|SANTA CLARA',
-    'MER07692|Café Puro a Vácuo 250g|PURO',
-    'MER07635|Café Puro Almofada 250g|PURO'
-  ],
-  cappuccino: [
-    'MER14707|Cappuccino Classic 3 Corações Pote 200g|3 CORACOES',
-    'MER14752|Cappuccino Classic 3 Corações Pote 400g|3 CORACOES',
-    'MER14751|Cappuccino Chocolate 3 Corações Pote 200g|3 CORACOES',
-    'MER38376|Cappuccino Baunilha 3 Corações Pote 200g|3 CORACOES',
-    'MER08926|Cappuccino Caramelo Salgado 3 Corações 200g|3 CORACOES',
-    'MER14730|Cappuccino Descafeinado 3 Corações 200g|3 CORACOES',
-    'MER07698|Cappuccino Tradicional Maratá 200g|MARATA',
-    'MER02432|Cappuccino Chocolate Maratá 200g|MARATA',
-    'MER38567|Cappuccino Solúvel Tradicional Melitta Lata|MELITTA',
-    'MER02061|Cappuccino Chocolate com Avelã Melitta Lata 200g|MELITTA',
-    'MER38570|Cappuccino Chocolate Melitta Lata|MELITTA'
-  ],
-  soluvel: [
-    'MER09593|Café Solúvel Nescafé Original 100g|NESCAFE',
-    'MER09594|Café Solúvel Nescafé Tradição 100g|NESCAFE',
-    'MER33397|Café Solúvel Nescafé Original 200g|NESCAFE',
-    "MER07679|Café Solúvel Classique L'Or Vidro 84g|L'OR",
-    "MER07236|Café Solúvel Intense L'Or Vidro 130g|L'OR",
-    "MER07680|Café Solúvel Montanhas Capixabas L'Or 84g|L'OR",
-    'MER02421|Café Solúvel Granulado Clássico Santa Clara Vidro|SANTA CLARA',
-    'MER05957|Café Solúvel Granulado Clássico Santa Clara|SANTA CLARA',
-    'MER23431|Café Solúvel Liofilizado Santa Clara 50g|SANTA CLARA'
-  ]
+// ══════════════════════════════════════
+//  AUDIT
+// ══════════════════════════════════════
+const CAT_AUDIT={
+  cafe:["MER12020|Café Torrado e Moído Extraforte Melitta 250g|MELITTA","MER38044|Café Torrado e Moído Tradicional Melitta 250g|MELITTA","MER39873|Café Torrado e Moído Especial Melitta 500g|MELITTA","MER07683|Café Lor Pouch Ultimo 250g|L'OR","MER25422|Café Gourmet Cerrado Mineiro L'Or 250g|L'OR","MER25390|Café Intenso L'Or Torras Gourmet 250g|L'OR","MER25388|Café Gourmet Sul de Minas L'Or 250g|L'OR","MER25423|Café Lor Delicado 250g|L'OR","MER07679|Café Solúvel Classique L'Or Vidro 84g|L'OR","MER07236|Café Solúvel Intense L'Or Vidro 130g|L'OR","MER07680|Café Solúvel Montanhas Capixabas L'Or 84g|L'OR","MER07743|Café Solúvel Sul da Bahia L'Or 84g|L'OR","MER15640|Café Imola Intenso L'Or 250g|L'OR","MER02512|Café Torrado Tradicional Pilão a Vácuo 250g|PILAO","MER07645|Café Torrado Extraforte Pilão 250g|PILAO","MER02760|Café Torrado Tradicional Pilão Pacote 250g|PILAO","MER02282|Café Solúvel Pilão Cafeteria Sachê 40g|PILAO","MER02639|Café Tradicional Maratá a Vácuo 250g|MARATA","MER02363|Café Extraforte Almofada Maratá 250g|MARATA","MER07711|Café Tradicional Maratá 100g|MARATA","MER09593|Café Solúvel Nescafé Original 100g|NESCAFE","MER09594|Café Solúvel Nescafé Tradição 100g|NESCAFE","MER02421|Café Solúvel Granulado Clássico Santa Clara Vidro|SANTA CLARA","MER07692|Café Puro a Vácuo 250g|PURO","MER07635|Café Puro Almofada 250g|PURO"],
+  cappuccino:["MER14707|Cappuccino Classic 3 Corações Pote 200g|3 CORACOES","MER14752|Cappuccino Classic 3 Corações Pote 400g|3 CORACOES","MER14751|Cappuccino Chocolate 3 Corações Pote 200g|3 CORACOES","MER38376|Cappuccino Baunilha 3 Corações Pote 200g|3 CORACOES","MER08926|Cappuccino Caramelo Salgado 3 Corações 200g|3 CORACOES","MER14730|Cappuccino Descafeinado 3 Corações 200g|3 CORACOES","MER07698|Cappuccino Tradicional Maratá 200g|MARATA","MER02432|Cappuccino Chocolate Maratá 200g|MARATA","MER38567|Cappuccino Solúvel Tradicional Melitta Lata|MELITTA","MER02061|Cappuccino Chocolate com Avelã Melitta Lata 200g|MELITTA","MER38570|Cappuccino Chocolate Melitta Lata|MELITTA"],
+  soluvel:["MER09593|Café Solúvel Nescafé Original 100g|NESCAFE","MER09594|Café Solúvel Nescafé Tradição 100g|NESCAFE","MER33397|Café Solúvel Nescafé Original 200g|NESCAFE","MER07679|Café Solúvel Classique L'Or Vidro 84g|L'OR","MER07236|Café Solúvel Intense L'Or Vidro 130g|L'OR","MER07680|Café Solúvel Montanhas Capixabas L'Or 84g|L'OR","MER02421|Café Solúvel Granulado Clássico Santa Clara Vidro|SANTA CLARA","MER05957|Café Solúvel Granulado Clássico Santa Clara|SANTA CLARA","MER23431|Café Solúvel Liofilizado Santa Clara 50g|SANTA CLARA"]
 };
 
-async function audit() {
-  const sec = document.getElementById('sel').value;
-  if (!sec) { showErr('audit', 'Selecione uma seção.'); return; }
+async function audit(){
+  const sec=document.getElementById('sel').value;
+  if(!sec){showErr('audit','Selecione uma seção.');return}
   hideErr('audit');
-  document.getElementById('auditBtn').style.display = 'none';
-  document.querySelector('#v1 .btn-g').style.display = 'none';
-  const pu = document.getElementById('auditPulse'); pu.classList.add('on');
-  const msgs = ['Identificando marcas…','Contando facings…','Detectando rupturas…','Calculando conformidade…'];
-  let mi = 0;
-  const tick = setInterval(() => { document.getElementById('auditPs').textContent = msgs[mi = (mi + 1) % msgs.length]; }, 1600);
+  document.getElementById('auditBtn').style.display='none';document.querySelector('#v1 .btn-g').style.display='none';
+  const pu=document.getElementById('auditPulse');pu.classList.add('on');
+  const msgs=['Identificando marcas…','Contando facings…','Detectando rupturas…','Conformidade…'];
+  let mi=0;const tick=setInterval(()=>{document.getElementById('auditPs').textContent=msgs[mi=(mi+1)%msgs.length]},1600);
+  const prods=(CAT_AUDIT[sec]||[]).map(l=>{const[id,name,brand]=l.split('|');return'- ['+id+'] '+name+' ('+brand+')'}).join('\n');
 
-  const prods = (CAT_AUDIT[sec] || []).map(l => { const [id, name, brand] = l.split('|'); return '- [' + id + '] ' + name + ' (' + brand + ')'; }).join('\n');
-
-  try {
-    const parsed = await callVision(imgs.audit,
-      'Você é um sistema de auditoria de gôndola de supermercado. Analise a imagem shelf por shelf.\n\n' +
-      'IMPORTANTE: Para cada produto encontrado e para cada item com baixo estoque, retorne as coordenadas do BOUNDING BOX como porcentagem (0-100).\n' +
-      'x = posição horizontal esquerda, y = posição vertical topo, w = largura, h = altura (tudo em % da imagem).\n\n' +
-      'Produtos esperados:\n' + prods + '\n\n' +
-      'Retorne APENAS JSON válido sem markdown:\n' +
-      '{"encontrados":[{"id":"","nome":"","facings":0,"shelf":"","conf":0.0,"bbox":{"x":0,"y":0,"w":0,"h":0}}],' +
-      '"baixo":[{"id":"","nome":"","facings":0,"obs":"","bbox":{"x":0,"y":0,"w":0,"h":0}}],' +
-      '"ausentes":["id1"],"extras":[{"desc":"","bbox":{"x":0,"y":0,"w":0,"h":0}}],"score":0,"obs":""}'
-    );
-    clearInterval(tick); pu.classList.remove('on');
-    renderAudit(parsed, CAT_AUDIT[sec] || []);
-  } catch (e) {
-    clearInterval(tick); pu.classList.remove('on');
-    document.getElementById('auditBtn').style.display = '';
-    document.querySelector('#v1 .btn-g').style.display = '';
-    showErr('audit', e.message || 'Erro.');
+  try{
+    const d=await callVision(imgs.audit,
+      'Auditoria de gôndola. Analise shelf por shelf.\n\n'+
+      'BOUNDING BOX obrigatório para cada produto (% da imagem: x,y,w,h). Mesmo produto em locais diferentes = entradas separadas com mesmo id.\n\n'+
+      'Produtos esperados:\n'+prods+'\n\n'+
+      'JSON sem markdown:\n'+
+      '{"encontrados":[{"id":"","nome":"","facings":0,"shelf":"","conf":0.0,"bbox":{"x":0,"y":0,"w":0,"h":0}}],'+
+      '"baixo":[{"id":"","nome":"","facings":0,"obs":"","bbox":{"x":0,"y":0,"w":0,"h":0}}],'+
+      '"ausentes":["id1"],"extras":[{"desc":"","bbox":{"x":0,"y":0,"w":0,"h":0}}],"score":0,"obs":""}');
+    clearInterval(tick);pu.classList.remove('on');
+    renderAudit(d,CAT_AUDIT[sec]||[]);
+  }catch(e){
+    clearInterval(tick);pu.classList.remove('on');
+    document.getElementById('auditBtn').style.display='';document.querySelector('#v1 .btn-g').style.display='';
+    showErr('audit',e.message);
   }
 }
 
-function renderAudit(d, catList) {
-  const results = document.getElementById('auditResults');
-  results.innerHTML = '';
-  const ok = d.encontrados || [], low = d.baixo || [], miss = d.ausentes || [],
-        extras = d.extras || [], score = d.score || 0;
+function renderAudit(d,catList){
+  const results=document.getElementById('auditResults');results.innerHTML='';
+  const ok=d.encontrados||[],low=d.baixo||[],miss=d.ausentes||[],extras=d.extras||[],score=d.score||0;
 
-  // Build annotations for overlay
-  const annotations = [];
-  ok.forEach(p => {
-    if (p.bbox && (p.bbox.w > 0 || p.bbox.h > 0)) {
-      annotations.push({ x: p.bbox.x, y: p.bbox.y, w: p.bbox.w, h: p.bbox.h,
-        label: (p.nome || '').substring(0, 20), status: 'ok', conf: p.conf });
-    }
+  // Build boxes
+  const boxes=[];
+  ok.forEach(p=>{
+    const cm=catalogLoaded?catalog.find(c=>c.id===p.id):null;
+    if(p.bbox&&(p.bbox.w>0||p.bbox.h>0))
+      boxes.push({x:p.bbox.x,y:p.bbox.y,w:p.bbox.w,h:p.bbox.h,label:p.nome||'',nome:p.nome,
+        marca:'',conf:p.conf,catalogMatch:cm,status:'ok',productKey:p.id||p.nome});
   });
-  low.forEach(p => {
-    if (p.bbox && (p.bbox.w > 0 || p.bbox.h > 0)) {
-      annotations.push({ x: p.bbox.x, y: p.bbox.y, w: p.bbox.w, h: p.bbox.h,
-        label: '⚠ ' + (p.nome || '').substring(0, 18), status: 'warn', conf: null });
-    }
+  low.forEach(p=>{
+    const cm=catalogLoaded?catalog.find(c=>c.id===p.id):null;
+    if(p.bbox&&(p.bbox.w>0||p.bbox.h>0))
+      boxes.push({x:p.bbox.x,y:p.bbox.y,w:p.bbox.w,h:p.bbox.h,label:'⚠ '+(p.nome||''),nome:p.nome,
+        marca:'',conf:null,catalogMatch:cm,status:'warn',productKey:p.id||p.nome});
   });
-  if (Array.isArray(extras)) {
-    extras.forEach(e => {
-      const bb = e && e.bbox;
-      if (bb && (bb.w > 0 || bb.h > 0)) {
-        annotations.push({ x: bb.x, y: bb.y, w: bb.w, h: bb.h,
-          label: 'Extra', status: 'extra', conf: null });
-      }
-    });
-  }
+  if(Array.isArray(extras))extras.forEach(e=>{
+    if(e&&e.bbox&&(e.bbox.w>0||e.bbox.h>0))
+      boxes.push({x:e.bbox.x,y:e.bbox.y,w:e.bbox.w,h:e.bbox.h,label:'Extra',nome:e.desc||'Extra',
+        marca:'',conf:null,catalogMatch:null,status:'extra',productKey:'extra_'+e.desc});
+  });
 
-  // Render overlay
-  if (annotations.length > 0 && imgSrcs.audit) {
-    const overlay = drawOverlay(imgSrcs.audit, annotations, 'audit');
-    results.appendChild(overlay);
-  }
+  if(boxes.length&&imgSrcs.audit)buildOverlay(imgSrcs.audit,boxes,results);
 
-  // Score bar
-  let html = '<div class="total-bar">' +
-    '<div class="total-score" style="color:' + (score >= 80 ? 'var(--ok)' : score >= 55 ? 'var(--warn)' : 'var(--err)') + '">' + score + '%</div>' +
-    '<div class="total-info"><div class="total-title">Conformidade da gôndola</div>' +
-    '<div class="total-sub">' + ok.length + ' encontrados · ' + low.length + ' baixo estoque · ' + miss.length + ' ausentes</div>' +
-    '<div class="prog"><div class="prog-fill" style="width:' + score + '%;background:' + (score >= 80 ? 'var(--ok)' : score >= 55 ? 'var(--warn)' : 'var(--err)') + '"></div></div></div></div>' +
-    '<div class="score-row">' +
-    '<div class="sc"><div class="sc-n" style="color:var(--ok)">' + ok.length + '</div><div class="sc-l">Encontrados</div></div>' +
-    '<div class="sc"><div class="sc-n" style="color:var(--warn)">' + low.length + '</div><div class="sc-l">Baixo</div></div>' +
-    '<div class="sc"><div class="sc-n" style="color:var(--err)">' + miss.length + '</div><div class="sc-l">Ausentes</div></div></div>';
+  let html='<div class="total-bar">'+
+    '<div class="total-score" style="color:'+(score>=80?'var(--ok)':score>=55?'var(--warn)':'var(--err)')+'">'+score+'%</div>'+
+    '<div class="total-info"><div class="total-title">Conformidade</div>'+
+    '<div class="total-sub">'+ok.length+' OK · '+low.length+' baixo · '+miss.length+' ausentes</div>'+
+    '<div class="prog"><div class="prog-fill" style="width:'+score+'%;background:'+(score>=80?'var(--ok)':score>=55?'var(--warn)':'var(--err)')+'"></div></div></div></div>'+
+    '<div class="score-row">'+
+    '<div class="sc"><div class="sc-n" style="color:var(--ok)">'+ok.length+'</div><div class="sc-l">OK</div></div>'+
+    '<div class="sc"><div class="sc-n" style="color:var(--warn)">'+low.length+'</div><div class="sc-l">Baixo</div></div>'+
+    '<div class="sc"><div class="sc-n" style="color:var(--err)">'+miss.length+'</div><div class="sc-l">Ausentes</div></div></div>';
 
-  if (ok.length) {
-    html += '<div class="shelf-block"><div class="shelf-label">✅ Encontrados</div>';
-    ok.forEach(p => {
-      const c = Math.round((p.conf || .9) * 100);
-      let imgH = '';
-      if (catalogLoaded) { const ci = catalog.find(x => x.id === p.id); if (ci && ci.image_link) imgH = '<img style="width:50px;height:50px;border-radius:6px;object-fit:contain;background:var(--s2)" src="' + ci.image_link + '" onerror="this.style.display=\'none\'">'; }
-      html += '<div class="item">' + imgH + '<div class="item-left"><div class="item-brand">' + p.nome + '</div>' +
-        '<div class="item-meta"><span class="meta-pill">' + p.id + '</span><span class="meta-pill">' + (p.facings || 1) + 'f</span>' +
-        (p.shelf ? '<span class="meta-pill">' + p.shelf + '</span>' : '') + '</div>' +
-        '<div class="conf-bar"><div class="conf-fill" style="width:' + c + '%;background:' + (c >= 90 ? 'var(--ok)' : c >= 75 ? 'var(--warn)' : 'var(--err)') + '"></div></div>' +
-        '</div><div class="badge ' + (c >= 90 ? 'b-ok' : c >= 75 ? 'b-warn' : 'b-err') + '">' + c + '%</div></div>';
-    });
-    html += '</div>';
+  if(ok.length){
+    html+='<div class="shelf-block"><div class="shelf-label">✅ Encontrados</div>';
+    ok.forEach(p=>{const c=Math.round((p.conf||.9)*100);
+      let ih='';if(catalogLoaded){const ci=catalog.find(x=>x.id===p.id);if(ci&&ci.image_link)ih='<img style="width:50px;height:50px;border-radius:6px;object-fit:contain;background:var(--s2)" src="'+ci.image_link+'" onerror="this.style.display=\'none\'">';}
+      html+='<div class="item">'+ih+'<div class="item-left"><div class="item-brand">'+p.nome+'</div>'+
+        '<div class="item-meta"><span class="meta-pill">'+p.id+'</span><span class="meta-pill">'+(p.facings||1)+'f</span>'+
+        (p.shelf?'<span class="meta-pill">'+p.shelf+'</span>':'')+'</div>'+
+        '<div class="conf-bar"><div class="conf-fill" style="width:'+c+'%;background:'+(c>=90?'var(--ok)':c>=75?'var(--warn)':'var(--err)')+'"></div></div>'+
+        '</div><div class="badge '+(c>=90?'b-ok':c>=75?'b-warn':'b-err')+'">'+c+'%</div></div>'});
+    html+='</div>';
   }
-  if (low.length) {
-    html += '<div class="shelf-block"><div class="shelf-label">⚠️ Baixo estoque</div>';
-    low.forEach(p => {
-      html += '<div class="item"><div class="item-left"><div class="item-brand">' + p.nome + '</div>' +
-        '<div class="item-meta"><span class="meta-pill">' + p.id + '</span><span class="meta-pill">' + (p.facings || 1) + 'f</span>' +
-        (p.obs ? '<span class="meta-pill">' + p.obs + '</span>' : '') + '</div></div><div class="badge b-warn">Repor</div></div>';
-    });
-    html += '</div>';
+  if(low.length){
+    html+='<div class="shelf-block"><div class="shelf-label">⚠️ Baixo estoque</div>';
+    low.forEach(p=>{html+='<div class="item"><div class="item-left"><div class="item-brand">'+p.nome+'</div>'+
+      '<div class="item-meta"><span class="meta-pill">'+p.id+'</span><span class="meta-pill">'+(p.facings||1)+'f</span>'+
+      (p.obs?'<span class="meta-pill">'+p.obs+'</span>':'')+'</div></div><div class="badge b-warn">Repor</div></div>'});
+    html+='</div>';
   }
-  if (miss.length) {
-    html += '<div class="shelf-block"><div class="shelf-label">🚨 Ruptura</div>';
-    miss.forEach(id => {
-      const prod = catList.find(l => l.startsWith(id + '|'));
-      html += '<div class="item"><div class="item-left"><div class="item-name">' + (prod ? prod.split('|')[1] : id) + '</div></div><div class="badge b-err">Ruptura</div></div>';
-    });
-    html += '</div>';
+  if(miss.length){
+    html+='<div class="shelf-block"><div class="shelf-label">🚨 Ruptura</div>';
+    miss.forEach(id=>{const prod=catList.find(l=>l.startsWith(id+'|'));
+      html+='<div class="item"><div class="item-left"><div class="item-name">'+(prod?prod.split('|')[1]:id)+'</div></div><div class="badge b-err">Ruptura</div></div>'});
+    html+='</div>';
   }
-  if (d.obs) html += '<div class="obs-box">💬 ' + d.obs + '</div>';
-  html += '<button class="btn btn-g" style="margin-top:12px" onclick="resetAudit()">Nova auditoria</button>';
-  results.insertAdjacentHTML('beforeend', html);
-  results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if(d.obs)html+='<div class="obs-box">💬 '+d.obs+'</div>';
+  html+='<button class="btn btn-g" style="margin-top:12px" onclick="resetAudit()">Nova auditoria</button>';
+  results.insertAdjacentHTML('beforeend',html);
+  results.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
-function resetAudit() {
-  document.getElementById('auditResults').innerHTML = '';
-  document.getElementById('auditBtn').style.display = '';
-  document.querySelector('#v1 .btn-g').style.display = '';
+function resetAudit(){
+  document.getElementById('auditResults').innerHTML='';
+  document.getElementById('auditBtn').style.display='';document.querySelector('#v1 .btn-g').style.display='';
   checkBtn('audit');
 }
 
-// ── UTILS ──
-function showErr(p, m) { const el = document.getElementById(p + 'Err'); el.textContent = '⚠️ ' + m; el.classList.add('on'); }
-function hideErr(p) { document.getElementById(p + 'Err').classList.remove('on'); }
+function showErr(p,m){const el=document.getElementById(p+'Err');el.textContent='⚠️ '+m;el.classList.add('on')}
+function hideErr(p){document.getElementById(p+'Err').classList.remove('on')}
 </script>
 </body>
 </html>
